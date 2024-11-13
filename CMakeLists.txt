@@ -1,10 +1,21 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
-project(project_template_assets_ui)
+project(example_telegram_client)
 
-# Tip: in a production project don't use branch name, use a specific name tag (i.e. v1.1.1),
-# but for a sandbox project branch name is perfectly enough
-set(AUI_VERSION master)
+set(TELEGRAM_API_ID "" CACHE STRING "telegram api id")
+set(TELEGRAM_API_HASH "" CACHE STRING "telegram api hash")
+
+if(NOT TELEGRAM_API_ID)
+    message(FATAL_ERROR "TELEGRAM_API_ID is mandatory.")
+endif()
+
+if(NOT TELEGRAM_API_HASH)
+    message(FATAL_ERROR "TELEGRAM_API_HASH is mandatory.")
+endif()
+
+set(AUI_VERSION d6ed664b864a60864f4d34b01c7fa978add8eddf)
+
+set(BUILD_SHARED_LIBS OFF)
 
 # Use AUI.Boot
 file(
@@ -18,12 +29,17 @@ auib_import(aui https://github.com/aui-framework/aui
         COMPONENTS core views
         VERSION ${AUI_VERSION})
 
+# import tdlib (telegram client library)
+auib_import(Td https://github.com/tdlib/td
+        VERSION 18618ca)
 
 # Create the executable. This function automatically links all sources from the src/ folder,
 # creates CMake target and places the resulting executable to bin/ folder.
 aui_executable(${PROJECT_NAME})
 
 # Link required libs
-aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views)
+aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views Td::TdStatic)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE TELEGRAM_API_ID=${TELEGRAM_API_ID} TELEGRAM_API_HASH=${TELEGRAM_API_HASH})
 
 aui_compile_assets(${PROJECT_NAME})

@@ -4,25 +4,18 @@
 #include <AUI/View/AButton.h>
 #include <AUI/Platform/APlatform.h>
 #include <AUI/View/ADrawableView.h>
+#include <AUI/Util/ALayoutInflater.h>
 
 using namespace declarative;
 
-MainWindow::MainWindow(): AWindow("Project template app", 300_dp, 200_dp) {
+MainWindow::MainWindow(_<App> app): AWindow("Example telegram client", 800_dp, 500_dp), mApp(std::move(app)) {
     setContents(
         Centered{
-            Vertical{
-                Centered { Icon { ":img/logo.svg" } with_style { FixedSize(64_dp) } },
-                Centered { Label { "Hello world from AUI!" } },
-                _new<AButton>("Visit GitHub repo").connect(&AView::clicked, this, [] {
-                    APlatform::openUrl("https://github.com/aui-framework/aui");
-                }),
-                _new<AButton>("Visit docs").connect(&AView::clicked, this, [] {
-                    APlatform::openUrl("https://aui-framework.github.io/");
-                }),
-                _new<AButton>("Submit an issue").connect(&AView::clicked, this, [] {
-                    APlatform::openUrl("https://github.com/aui-framework/aui/issues/new");
-                }),
-            }
+            Label { "Starting..." }
         }
     );
+}
+
+void MainWindow::present(_<AView> view) {
+    ALayoutInflater::inflate(this, std::move(view));
 }

@@ -1,7 +1,7 @@
 #include <AUI/Platform/Entry.h>
-#include "MainWindow.h"
+#include "App.h"
 
 AUI_ENTRY {
-    _new<MainWindow>()->show();
+    _new<App>()->run();
     return 0;
 };
