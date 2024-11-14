@@ -14,23 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+//
+// Created by alex2772 on 11/14/24.
+//
 
-#include <AUI/Util/ADataBinding.h>
-#include <AUI/Common/AMap.h>
-#include <AUI/Image/IDrawable.h>
-#include "Message.h"
+#include <AUI/Image/AImageLoaderRegistry.h>
+#include "Image.h"
 
-struct ChatModel {
-    int64_t id;
-    AString title;
-    AString previewText;
-    _<Message> lastMessage;
-    _<IDrawable> thumbnail;
-
-    mutable AMap<int64_t, _<Message>> messages;
-
-    const _<Message>& getMessage(int64_t id) const;
-};
-
-using Chat = ADataBinding<ChatModel>;
+_<AImage> util::image::from(const td::td_api::minithumbnail& minithumbnail) {
+    return AImage::fromBuffer(AByteBufferView(minithumbnail.data_));
+}

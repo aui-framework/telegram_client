@@ -16,21 +16,9 @@
 
 #pragma once
 
-#include <AUI/Util/ADataBinding.h>
-#include <AUI/Common/AMap.h>
-#include <AUI/Image/IDrawable.h>
-#include "Message.h"
+#include <AUI/Util/AImageDrawable.h>
+#include "App.h"
 
-struct ChatModel {
-    int64_t id;
-    AString title;
-    AString previewText;
-    _<Message> lastMessage;
-    _<IDrawable> thumbnail;
-
-    mutable AMap<int64_t, _<Message>> messages;
-
-    const _<Message>& getMessage(int64_t id) const;
-};
-
-using Chat = ADataBinding<ChatModel>;
+namespace util::image {
+    _<AImage> from(const td::td_api::minithumbnail& minithumbnail);
+}
