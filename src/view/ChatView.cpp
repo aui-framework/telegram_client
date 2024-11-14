@@ -74,14 +74,14 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
     });
 
     mApp->sendQuery(td::td_api::getChatHistory((*mChat)->id, (*mChat)->lastMessage ? (*(*mChat)->lastMessage)->id : 0, 0, 99, false), [this](td::td_api::messages& messages) {
-        auto model = AListModel<_<Message>>::fromVector(messages.messages_
-            | ranges::view::reverse
-            | ranges::view::transform([&](td::td_api::object_ptr<td::td_api::message>& message) {
-                auto msg = (*mChat)->getMessage(message->id_);
-                msg->getEditableModel().populateFrom(std::move(message));
-                return msg;
-            })
-            | ranges::to_vector);
+        for (auto& message : messages.messages_) {
+            auto msg = (*mChat)->getMessage(message->id_);
+            msg->getEditableModel().populateFrom(std::move(message));
+        }
+        auto model = AListModel<_<Message>>::fromVector((*mChat)->messages
+            | ranges::view::values
+            | ranges::to_vector
+            | ranges::action::sort(std::less<>{}, [](const _<Message>& msg) { return (*msg)->id; }));
 
         ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, model, AVerticalLayout) {
             auto view = AText::fromString("") with_style {
