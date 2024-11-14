@@ -1,6 +1,6 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
-project(example_telegram_client)
+project(telegram_client)
 
 set(TELEGRAM_API_ID "" CACHE STRING "telegram api id")
 set(TELEGRAM_API_HASH "" CACHE STRING "telegram api hash")
@@ -13,7 +13,7 @@ if(NOT TELEGRAM_API_HASH)
     message(FATAL_ERROR "TELEGRAM_API_HASH is mandatory.")
 endif()
 
-set(AUI_VERSION d6ed664b864a60864f4d34b01c7fa978add8eddf)
+set(AUI_VERSION 4639291)
 
 set(BUILD_SHARED_LIBS OFF)
 

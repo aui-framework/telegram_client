@@ -86,6 +86,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
         ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, model, AVerticalLayout) {
             auto view = AText::fromString("") with_style {
                 MaxSize { 400_dp, {} },
+                Expanding(0, 0),
             } && (*message)(&MessageModel::text, &AText::setString);
             view << ".message";
             const bool mine = (*message)->userId == mApp->myId();

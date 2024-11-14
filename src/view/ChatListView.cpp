@@ -38,7 +38,6 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
         },
         {
             t<AScrollArea>(),
-            ScrollbarAppearance { ScrollbarAppearance::VISIBLE, ScrollbarAppearance::GONE },
         }
     });
     mApp->sendQuery(td::td_api::getChats(nullptr, 20), [this](td::td_api::chats& chats) {
