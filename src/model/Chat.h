@@ -19,6 +19,7 @@
 #include <AUI/Util/ADataBinding.h>
 #include <AUI/Common/AMap.h>
 #include <AUI/Image/IDrawable.h>
+#include <AUI/Model/AListModel.h>
 #include "Message.h"
 
 struct ChatModel {
@@ -28,7 +29,7 @@ struct ChatModel {
     _<Message> lastMessage;
     _<IDrawable> thumbnail;
 
-    mutable AMap<int64_t, _<Message>> messages;
+    _<AListModel<_<Message>>> messages = _new<AListModel<_<Message>>>();
 
     const _<Message>& getMessage(int64_t id) const;
 };

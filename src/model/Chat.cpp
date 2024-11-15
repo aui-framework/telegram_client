@@ -18,9 +18,14 @@
 // Created by alex2772 on 11/13/24.
 //
 #include "Chat.h"
+#include <range/v3/all.hpp>
 
 const _<Message>& ChatModel::getMessage(int64_t id) const {
-    return messages.getOrInsert(id, [&] {
-        return _new<Message>(MessageModel{ .id = id });
-    });
+    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
+    if (l != messages.end()) {
+        if ((**l)->id == id) {
+            return *l;
+        }
+    }
+    return *messages->insert(l, _new<Message>(MessageModel{ .id = id }));
 }

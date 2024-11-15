@@ -13,7 +13,7 @@ if(NOT TELEGRAM_API_HASH)
     message(FATAL_ERROR "TELEGRAM_API_HASH is mandatory.")
 endif()
 
-set(AUI_VERSION 4639291)
+set(AUI_VERSION edbc546f4c403946babbb39a656faed512bb59fc)
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -43,3 +43,4 @@ aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views Td::TdStatic)
 target_compile_definitions(${PROJECT_NAME} PRIVATE TELEGRAM_API_ID=${TELEGRAM_API_ID} TELEGRAM_API_HASH=${TELEGRAM_API_HASH})
 
 aui_compile_assets(${PROJECT_NAME})
+aui_enable_tests(${PROJECT_NAME})

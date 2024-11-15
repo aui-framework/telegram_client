@@ -57,7 +57,9 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
             Margin { {}, {}, 1_px, 1_px }
         },
-        AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding(),
+        AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
+            it->verticalScrollbar()->setStickToEnd(true);
+        },
         Horizontal {
             mInput,
             Button { "Send" }.connect(&AView::clicked, me::send),
@@ -81,14 +83,10 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
     mApp->sendQuery(td::td_api::getChatHistory((*mChat)->id, (*mChat)->lastMessage ? (*(*mChat)->lastMessage)->id : 0, 0, 99, false), [this](td::td_api::messages& messages) {
         for (auto& message : messages.messages_) {
             auto msg = (*mChat)->getMessage(message->id_);
-            msg->getEditableModel().populateFrom(std::move(message));
+            MessageModel::populateFrom(*msg, std::move(message));
         }
-        auto model = AListModel<_<Message>>::fromVector((*mChat)->messages
-            | ranges::view::values
-            | ranges::to_vector
-            | ranges::action::sort(std::less<>{}, [](const _<Message>& msg) { return (*msg)->id; }));
 
-        ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, model, AVerticalLayout) {
+        ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
             auto view = AText::fromString("") with_style {
                 MaxSize { 400_dp, {} },
                 Expanding(0, 0),
@@ -107,6 +105,15 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                 });
             });
             view << ".message";
+
+            // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
+            message->addObserverNoInitialCall(&MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
+                auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) { return (*msg)->id; });
+                if (it != chat->messages.end()) {
+                    chat->messages->invalidate(it);
+                }
+            });
+
             const bool mine = (*message)->userId == mApp->myId();
             if (mine) {
                 view << ".message_mine";

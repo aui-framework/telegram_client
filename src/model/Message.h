@@ -26,7 +26,7 @@ struct MessageModel {
     std::chrono::system_clock::time_point date;
 
     static AString makePreviewText(td::td_api::message* message);
-    void populateFrom(td::td_api::object_ptr<td::td_api::message> message);
+    static void populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message);
 
 };
 

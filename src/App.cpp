@@ -130,7 +130,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         });
                         if (u.chat_->last_message_) {
                             auto lastMessage = (*chat)->getMessage(u.chat_->last_message_->id_);
-                            lastMessage->getEditableModel().populateFrom(std::move(u.chat_->last_message_));
+                            MessageModel::populateFrom(*lastMessage, std::move(u.chat_->last_message_));
                             chat->getEditableModel().lastMessage = std::move(lastMessage);
                         }
                     },
@@ -141,7 +141,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         auto& chat = getChat(u.chat_id_);
                         chat->setValue(&ChatModel::previewText, MessageModel::makePreviewText(u.last_message_.get()));
                         auto lastMessage = (*chat)->getMessage(u.last_message_->id_);
-                        lastMessage->getEditableModel().populateFrom(std::move(u.last_message_));
+                        MessageModel::populateFrom(*lastMessage, std::move(u.last_message_));
                         chat->setValue(&ChatModel::lastMessage, std::move(lastMessage));
                     },
                     [this](td::td_api::updateUser &update_user) {
@@ -152,7 +152,8 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         }
                     },
                     [this](td::td_api::updateNewMessage& u) {
-                        (*getChat(u.message_->chat_id_))->getMessage(u.message_->id_)->getEditableModel().populateFrom(std::move(u.message_));
+                        auto msg = (*getChat(u.message_->chat_id_))->getMessage(u.message_->id_);
+                        MessageModel::populateFrom(*msg, std::move(u.message_));
                     },
                     Stub{}});
 }

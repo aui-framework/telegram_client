@@ -14,24 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "MainWindow.h"
-#include <AUI/Util/UIBuildingHelpers.h>
-#include <AUI/View/ALabel.h>
-#include <AUI/View/AButton.h>
-#include <AUI/Platform/APlatform.h>
-#include <AUI/View/ADrawableView.h>
-#include <AUI/Util/ALayoutInflater.h>
+//
+// Created by alex2772 on 11/15/24.
+//
 
-using namespace declarative;
+#include <gmock/gmock.h>
+#include "model/Chat.h"
 
-MainWindow::MainWindow(_<App> app): AWindow("AUI Telegram Client", 800_dp, 500_dp), mApp(std::move(app)) {
-    setContents(
-        Centered{
-            Label { "Starting..." }
-        }
-    );
-}
-
-void MainWindow::present(_<AView> view) {
-    ALayoutInflater::inflate(this, std::move(view));
+TEST(ChatModel, Insert) {
+    auto chat = _new<Chat>(ChatModel{});
+    auto msg1 = (*chat)->getMessage(1);
+    (*chat)->getMessage(0);
+    (*chat)->getMessage(2);
+    EXPECT_EQ((*msg1)->id, 1);
+    auto msg2 = (*chat)->getMessage(1);
+    EXPECT_EQ(msg1, msg2);
 }
