@@ -23,6 +23,7 @@ struct MessageModel {
     int64_t id;
     AString text;
     int64_t userId = 0;
+    std::chrono::system_clock::time_point date;
 
     static AString makePreviewText(td::td_api::message* message);
     void populateFrom(td::td_api::object_ptr<td::td_api::message> message);

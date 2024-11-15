@@ -41,6 +41,7 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
 
 void MessageModel::populateFrom(td::td_api::object_ptr<td::td_api::message> message) {
     text = makePreviewText(message.get());
+    date = std::chrono::system_clock::from_time_t(message->date_);
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
         [&](td::td_api::messageSenderUser& u) {
             userId = u.user_id_;

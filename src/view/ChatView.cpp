@@ -51,6 +51,11 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                 Label {} && mChat(&ChatModel::title),
                 Label { "last seen" },
             },
+        } with_style {
+            Padding { 4_dp },
+            BorderLeft { 1_px, AColor::GRAY.opacify(0.3f) },
+            BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
+            Margin { {}, {}, 1_px, 1_px }
         },
         AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding(),
         Horizontal {
@@ -62,7 +67,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
     setExtraStylesheet(AStylesheet {
         {
             c(".message"),
-            Padding { 6_dp },
+            Padding { 6_dp, 6_dp, 3_dp },
             BorderRadius { 12_dp },
             BackgroundSolid { AColor::BLACK.transparentize(0.90f) },
 //            ATextAlign::JUSTIFY,
@@ -87,7 +92,20 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             auto view = AText::fromString("") with_style {
                 MaxSize { 400_dp, {} },
                 Expanding(0, 0),
-            } && (*message)(&MessageModel::text, &AText::setString);
+            } && (*message)(&MessageModel::text, [&message = *message](AText& view, const AString& data) {
+                view.setItems({
+                    data,
+                    Horizontal {
+                        _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 8_pt }, Opacity { 0.5f } }
+                            && message(&MessageModel::date, [](std::chrono::system_clock::time_point time) {
+                                 return "{:%H:%M}"_format(time);
+                               }),
+                    } with_style {
+                        Margin { 4_dp, {}, {}, 4_dp, },
+                        AFloat::RIGHT,
+                    },
+                });
+            });
             view << ".message";
             const bool mine = (*message)->userId == mApp->myId();
             if (mine) {
