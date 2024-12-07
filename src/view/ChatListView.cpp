@@ -50,21 +50,24 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
                 return Horizontal {
                     Centered{
                         Icon{} with_style{
-                            FixedSize(32_dp),
-                            BorderRadius(16_dp),
+                            FixedSize(36_dp),
+                            BorderRadius(36_dp / 2),
                             AOverflow::HIDDEN,
                         } && chat(&ChatModel::thumbnail),
                     },
-                    Vertical::Expanding {
-                        Label {} && chat(&ChatModel::title),
-                        Label {} && chat(&ChatModel::previewText),
-                    }
+                    Centered{
+                        Vertical::Expanding{
+                            Label{} && chat(&ChatModel::title),
+                            Label{} && chat(&ChatModel::previewText),
+                        }
+                    },
                 }.connect(&AView::clicked, this, [this, chat] {
                     emit chatSelected(chat);
-                });
-            } with_style {
-                LayoutSpacing { 8_dp },
+                }) with_style {
+                    Padding { 5_dp, 6_dp },
+                    Margin { 0 },
+                };
             }
-        ));
+        ).build() << ".container_color");
     });
 }

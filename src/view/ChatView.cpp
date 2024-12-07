@@ -34,9 +34,7 @@ using namespace ass;
 using namespace declarative;
 
 ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::move(chat)) {
-    mInput = _new<ATextField>() with_style {
-        Expanding(1, 0),
-    };
+    mInput = _new<ATextArea>();
     mInput->focus();
     setContents(Vertical::Expanding {
         Horizontal {
@@ -56,27 +54,30 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             BorderLeft { 1_px, AColor::GRAY.opacify(0.3f) },
             BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
             Margin { {}, {}, 1_px, 1_px }
-        },
+        } << ".container_color",
         AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
             it->verticalScrollbar()->setStickToEnd(true);
+            it with_style {
+               MinSize(200_dp),
+            };
         },
         Horizontal {
-            mInput,
-            Button { "Send" }.connect(&AView::clicked, me::send),
-        }
+            AScrollArea::Builder().withContents(mInput).build() with_style {
+                Expanding(1, 0),
+                MaxSize { {}, 300_dp },
+            },
+            Vertical {
+                SpacerExpanding(),
+                Button{"Send"}.connect(&AView::clicked, me::send),
+            },
+        } with_style {
+            Padding(8_dp),
+        } << ".container_color",
     });
 
     setExtraStylesheet(AStylesheet {
         {
-            c(".message"),
-            Padding { 6_dp, 6_dp, 3_dp },
-            BorderRadius { 12_dp },
-            BackgroundSolid { AColor::BLACK.transparentize(0.90f) },
-//            ATextAlign::JUSTIFY,
-        },
-        {
             c(".message_mine"),
-            BackgroundSolid { AColor::BLACK.transparentize(0.8f) },
         },
     });
 
@@ -94,13 +95,14 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                 view.setItems({
                     data,
                     Horizontal {
-                        _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 8_pt }, Opacity { 0.5f } }
+                        _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 8_pt } }
                             && message(&MessageModel::date, [](std::chrono::system_clock::time_point time) {
                                  return "{:%H:%M}"_format(time);
                                }),
                     } with_style {
                         Margin { 4_dp, {}, {}, 4_dp, },
                         AFloat::RIGHT,
+                        Opacity { 0.3f },
                     },
                 });
             });

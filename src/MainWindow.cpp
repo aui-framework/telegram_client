@@ -21,6 +21,7 @@
 #include <AUI/Platform/APlatform.h>
 #include <AUI/View/ADrawableView.h>
 #include <AUI/Util/ALayoutInflater.h>
+#include <AUI/View/AScrollbar.h>
 
 using namespace declarative;
 
@@ -30,6 +31,44 @@ MainWindow::MainWindow(_<App> app): AWindow("AUI Telegram Client", 800_dp, 500_d
             Label { "Starting..." }
         }
     );
+    setExtraStylesheet({
+      // clear aui default styles.
+      {
+         t<AView>(),
+         TextColor { 0xf3f3f3_rgb },
+         BackgroundSolid { nullptr },
+         Border { nullptr },
+         BoxShadow { nullptr },
+         FontRendering::SUBPIXEL,
+      },
+
+
+      {
+         t<AWindowBase>(),
+         BackgroundSolid { 0x0d1520_rgb },
+         Padding { 0 },
+      },
+      {
+         c(".container_color"),
+         BackgroundSolid { 0x16202a_rgb },
+      },
+      {
+         c(".message"),
+         BackgroundSolid { 0x172433_rgb },
+         Padding { 6_dp, 9_dp, 4_dp },
+         BorderRadius { 12_dp },
+         Margin { 4_dp },
+      },
+      {
+         c(".message_mine"),
+         BackgroundSolid { 0x2a5277_rgb },
+      },
+
+      {
+         t<AScrollbarHandle>(),
+         BackgroundSolid { 0x4f555b_rgb },
+      }
+    });
 }
 
 void MainWindow::present(_<AView> view) {

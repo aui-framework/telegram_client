@@ -43,7 +43,9 @@ MainView::MainView(_<App> app) : mApp(std::move(app)) {
                 connect(it->chatSelected, me::presentChat);
             },
             mChatWrap = Stacked::Expanding {},
-        }
+        } with_style {
+            LayoutSpacing(1_px),
+        },
     });
 
     inflateChatPlaceholder();
@@ -56,7 +58,10 @@ void MainView::logout() {
 
 void MainView::inflateChatPlaceholder() {
     ALayoutInflater::inflate(mChatWrap, Centered {
-        Label { "Select a chat to start messaging" },
+        Label { "Select a chat to start messaging" } with_style {
+            FixedSize({}, 14_dp),
+            BorderRadius(14_dp / 2),
+        } << ".container_color",
     });
 }
 

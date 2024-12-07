@@ -30,7 +30,7 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
                     result = "Audio";
                 },
                 [&](td::td_api::messageText& u) {
-                    result = u.text_->text_.substr(0, u.text_->text_.find('\n'));
+                    result = AString(u.text_->text_).replaceAll('\n', ' ');
                 },
                 [](auto&) {},
         });
@@ -40,7 +40,16 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
 }
 
 void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message) {
-    self.setValue(&MessageModel::text, makePreviewText(message.get()));
+    self.setValue(&MessageModel::text, [&] {
+        AString result;
+        td::td_api::downcast_call(*message->content_, aui::lambda_overloaded{
+                [&](td::td_api::messageText& u) {
+                    result = u.text_->text_;
+                },
+                [](auto&) {},
+        });
+        return result;
+    }());
     self.setValue(&MessageModel::date, std::chrono::system_clock::from_time_t(message->date_));
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
         [&](td::td_api::messageSenderUser& u) {

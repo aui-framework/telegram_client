@@ -18,7 +18,7 @@
 
 
 #include <AUI/View/AViewContainer.h>
-#include <AUI/View/ATextField.h>
+#include <AUI/View/ATextArea.h>
 #include "App.h"
 
 class ChatView: public AViewContainer {
@@ -28,7 +28,7 @@ public:
 private:
     _<App> mApp;
     _<Chat> mChat;
-    _<ATextField> mInput;
+    _<ATextArea> mInput;
     _<AViewContainer> mContentsWrap;
 
     void send();

@@ -140,9 +140,11 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                     [this](td::td_api::updateChatLastMessage& u) {
                         auto& chat = getChat(u.chat_id_);
                         chat->setValue(&ChatModel::previewText, MessageModel::makePreviewText(u.last_message_.get()));
-                        auto lastMessage = (*chat)->getMessage(u.last_message_->id_);
-                        MessageModel::populateFrom(*lastMessage, std::move(u.last_message_));
-                        chat->setValue(&ChatModel::lastMessage, std::move(lastMessage));
+                        if (u.last_message_) {
+                            auto lastMessage = (*chat)->getMessage(u.last_message_->id_);
+                            MessageModel::populateFrom(*lastMessage, std::move(u.last_message_));
+                            chat->setValue(&ChatModel::lastMessage, std::move(lastMessage));
+                        }
                     },
                     [this](td::td_api::updateUser &update_user) {
                     },
