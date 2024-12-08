@@ -24,6 +24,7 @@
 class ChatView: public AViewContainer {
 public:
     ChatView(_<App> app, _<Chat> chat);
+    ~ChatView() override;
 
 private:
     _<App> mApp;

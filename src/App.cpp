@@ -129,6 +129,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                             .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? _new<AImageDrawable>(util::image::from(*u.chat_->photo_->minithumbnail_)) : nullptr,
                             .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
                             .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
+                            .unreadCount = u.chat_->unread_count_,
                         });
                         if (u.chat_->last_message_) {
                             auto lastMessage = (*chat)->getMessageOrNew(u.chat_->last_message_->id_);
@@ -138,6 +139,10 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                     },
                     [this](td::td_api::updateChatTitle& u) {
                         getChat(u.chat_id_)->setValue(&ChatModel::title, u.title_);
+                    },
+                    [this](td::td_api::updateChatReadInbox& u) {
+                        getChat(u.chat_id_)->setValue(&ChatModel::inboxLastReadMessage, u.last_read_inbox_message_id_);
+                        getChat(u.chat_id_)->setValue(&ChatModel::unreadCount, u.unread_count_);
                     },
                     [this](td::td_api::updateChatLastMessage& u) {
                         auto& chat = getChat(u.chat_id_);

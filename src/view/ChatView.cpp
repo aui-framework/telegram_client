@@ -40,6 +40,12 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
         connect(it->actionButtonPressed, me::send);
     };
 
+    {
+        td::td_api::openChat query;
+        query.chat_id_ = (*mChat)->id;
+        mApp->sendQuery(std::move(query));
+    }
+
     setContents(Vertical::Expanding {
         Horizontal {
             Centered{
@@ -91,6 +97,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             MessageModel::populateFrom(*msg, std::move(message));
         }
 
+        auto readMessagesBatch = _new<AVector<int64_t /* message id */>>();
         ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
             auto text = AText::fromString("") with_style {
                 MaxSize { 400_dp, {} },
@@ -123,6 +130,29 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                     Expanding(1, 1),
                 });
                 view << ".message_has_photo";
+            }
+
+            if ((*mChat)->inboxLastReadMessage < (*message)->id) {
+                // let's track visibility of this message in order to update read status.
+                connect(mScrollArea->scrolled, view, [this, scrollArea = mScrollArea.get(), messageView = view.get(), app = mApp, readMessagesBatch, message] {
+                    auto rectScrollArea = ARect<int>::fromTopLeftPositionAndSize(scrollArea->getPositionInWindow(), scrollArea->getSize());
+                    auto rectMessage = ARect<int>::fromTopLeftPositionAndSize(messageView->getPositionInWindow(), messageView->getSize());
+                    if (ranges::all_of(rectMessage.vertices(), [&](auto point) { return rectScrollArea.isIntersects(point); })) {
+                        mChat->setValue(&ChatModel::inboxLastReadMessage, glm::max((*mChat)->inboxLastReadMessage, (*message)->id));
+                        *readMessagesBatch << (*message)->id;
+                        AObject::disconnect();
+                        ui_thread {
+                            auto messagesToMarkViewed = std::exchange(*readMessagesBatch, {});
+                            if (messagesToMarkViewed.empty()) {
+                                return;
+                            }
+                            td::td_api::viewMessages viewMessages;
+                            viewMessages.chat_id_ = (*mChat)->id;
+                            viewMessages.message_ids_ = std::move(messagesToMarkViewed);
+                            app->sendQuery(std::move(viewMessages));
+                        };
+                    }
+                });
             }
 
             // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
@@ -165,4 +195,10 @@ void ChatView::send() {
     mApp->sendQuery(std::move(msg), [&](td::td_api::message&) {
         mScrollArea->verticalScrollbar()->scrollToEnd();
     });
+}
+
+ChatView::~ChatView() {
+    td::td_api::closeChat query;
+    query.chat_id_ = (*mChat)->id;
+    mApp->sendQuery(std::move(query));
 }

@@ -30,6 +30,7 @@ struct ChatModel {
     _<IDrawable> thumbnail;
     int64_t inboxLastReadMessage;
     int64_t outboxLastReadMessage;
+    int unreadCount;
 
     _<AListModel<_<Message>>> messages = _new<AListModel<_<Message>>>();
 
