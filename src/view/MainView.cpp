@@ -20,6 +20,7 @@
 
 #include <AUI/Util/UIBuildingHelpers.h>
 #include <AUI/View/AButton.h>
+#include <view/TGIco.h>
 #include <AUI/Util/ALayoutInflater.h>
 #include "MainView.h"
 #include "ChatListView.h"
@@ -33,6 +34,7 @@ MainView::MainView(_<App> app) : mApp(std::move(app)) {
     setContents(Vertical {
         Horizontal {
             _new<AButton>("Logout").connect(&AView::clicked, me::logout),
+            _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
         },
         Horizontal::Expanding {
             _new<ChatListView>(mApp) let {
@@ -59,8 +61,9 @@ void MainView::logout() {
 void MainView::inflateChatPlaceholder() {
     ALayoutInflater::inflate(mChatWrap, Centered {
         Label { "Select a chat to start messaging" } with_style {
-            FixedSize({}, 14_dp),
-            BorderRadius(14_dp / 2),
+            FixedSize({}, 22_dp),
+            Padding { {}, 12_dp },
+            BorderRadius(22_dp / 2),
         } << ".container_color",
     });
 }

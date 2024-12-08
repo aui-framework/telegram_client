@@ -48,6 +48,16 @@ public:
         });
     }
 
+    template<aui::derived_from<td::td_api::Function> F, aui::invocable<typename F::ReturnType::element_type&> Handler>
+    void sendQuery(td::td_api::object_ptr<F> f, Handler handler) {
+        sendQuery(std::move(f), [handler = std::move(handler)](Object object) {
+            if (object->get_id() == td::td_api::error::ID) {
+                return;
+            }
+            handler(*td::move_tl_object_as<typename F::ReturnType::element_type>(object));
+        });
+    }
+
     void run();
 
     _<App> sharedPtr() {

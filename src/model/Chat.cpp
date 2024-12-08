@@ -20,7 +20,7 @@
 #include "Chat.h"
 #include <range/v3/all.hpp>
 
-const _<Message>& ChatModel::getMessage(int64_t id) const {
+const _<Message>& ChatModel::getMessageOrNew(int64_t id) const {
     auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
     if (l != messages.end()) {
         if ((**l)->id == id) {
@@ -28,4 +28,14 @@ const _<Message>& ChatModel::getMessage(int64_t id) const {
         }
     }
     return *messages->insert(l, _new<Message>(MessageModel{ .id = id }));
+}
+
+_<Message> ChatModel::getMessage(int64_t id) const {
+    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
+    if (l != messages.end()) {
+        if ((**l)->id == id) {
+            return *l;
+        }
+    }
+    return nullptr;
 }

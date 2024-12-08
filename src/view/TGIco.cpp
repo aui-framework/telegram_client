@@ -14,27 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+//
+// Created by alex2772 on 12/8/24.
+//
 
-#include <AUI/Util/ADataBinding.h>
-#include <AUI/Common/AMap.h>
-#include <AUI/Image/IDrawable.h>
-#include <AUI/Model/AListModel.h>
-#include "Message.h"
-
-struct ChatModel {
-    int64_t id;
-    AString title;
-    AString previewText;
-    _<Message> lastMessage;
-    _<IDrawable> thumbnail;
-    int64_t inboxLastReadMessage;
-    int64_t outboxLastReadMessage;
-
-    _<AListModel<_<Message>>> messages = _new<AListModel<_<Message>>>();
-
-    const _<Message>& getMessageOrNew(int64_t id) const;
-    _<Message> getMessage(int64_t id) const;
-};
-
-using Chat = ADataBinding<ChatModel>;
+#include "TGIco.h"

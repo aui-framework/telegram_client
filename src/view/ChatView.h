@@ -28,6 +28,7 @@ public:
 private:
     _<App> mApp;
     _<Chat> mChat;
+    _<AScrollArea> mScrollArea;
     _<ATextArea> mInput;
     _<AViewContainer> mContentsWrap;
 

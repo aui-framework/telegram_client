@@ -127,9 +127,11 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                             .title = u.chat_->title_,
                             .previewText = MessageModel::makePreviewText(u.chat_->last_message_.get()),
                             .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? _new<AImageDrawable>(util::image::from(*u.chat_->photo_->minithumbnail_)) : nullptr,
+                            .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
+                            .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
                         });
                         if (u.chat_->last_message_) {
-                            auto lastMessage = (*chat)->getMessage(u.chat_->last_message_->id_);
+                            auto lastMessage = (*chat)->getMessageOrNew(u.chat_->last_message_->id_);
                             MessageModel::populateFrom(*lastMessage, std::move(u.chat_->last_message_));
                             chat->getEditableModel().lastMessage = std::move(lastMessage);
                         }
@@ -141,7 +143,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         auto& chat = getChat(u.chat_id_);
                         chat->setValue(&ChatModel::previewText, MessageModel::makePreviewText(u.last_message_.get()));
                         if (u.last_message_) {
-                            auto lastMessage = (*chat)->getMessage(u.last_message_->id_);
+                            auto lastMessage = (*chat)->getMessageOrNew(u.last_message_->id_);
                             MessageModel::populateFrom(*lastMessage, std::move(u.last_message_));
                             chat->setValue(&ChatModel::lastMessage, std::move(lastMessage));
                         }
@@ -154,8 +156,17 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         }
                     },
                     [this](td::td_api::updateNewMessage& u) {
-                        auto msg = (*getChat(u.message_->chat_id_))->getMessage(u.message_->id_);
+                        auto msg = (*getChat(u.message_->chat_id_))->getMessageOrNew(u.message_->id_);
                         MessageModel::populateFrom(*msg, std::move(u.message_));
+                    },
+                    [this](td::td_api::updateMessageSendSucceeded& u) {
+                        auto msg = (*getChat(u.message_->chat_id_))->getMessage(u.old_message_id_);
+                        if (!msg) {
+                            return;
+                        }
+                        msg->getEditableModel().id = u.message_->id_;
+                        MessageModel::populateFrom(*msg, std::move(u.message_));
+                        msg->setValue(&MessageModel::status, MessageModel::SendStatus::UNREAD);
                     },
                     Stub{}});
 }

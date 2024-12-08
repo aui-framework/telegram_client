@@ -20,6 +20,8 @@
 
 #include <td/telegram/td_api.hpp>
 #include "Message.h"
+#include "view/TGIco.h"
+#include "util/Image.h"
 
 AString MessageModel::makePreviewText(td::td_api::message* message) {
     AString result = "message";
@@ -31,6 +33,9 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
                 },
                 [&](td::td_api::messageText& u) {
                     result = AString(u.text_->text_).replaceAll('\n', ' ');
+                },
+                [&](td::td_api::messagePhoto& u) {
+                    result = AString(u.caption_->text_).replaceAll('\n', ' ');
                 },
                 [](auto&) {},
         });
@@ -46,6 +51,14 @@ void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::ob
                 [&](td::td_api::messageText& u) {
                     result = u.text_->text_;
                 },
+                [&](td::td_api::messagePhoto& u) {
+                    result = u.caption_->text_;
+                    auto& size = u.photo_->sizes_.front();
+                    self.setValue(&MessageModel::photo, MessageModel::Photo {
+                        .drawable = _new<AImageDrawable>(util::image::from(*u.photo_->minithumbnail_)),
+                        .size = { size->width_, size->height_ },
+                    });
+                },
                 [](auto&) {},
         });
         return result;
@@ -57,4 +70,25 @@ void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::ob
         },
         [](auto&) {},
     });
+    self.setValue(&MessageModel::isOutgoing, message->is_outgoing_);
+    if (self->isOutgoing) {
+        if (message->sending_state_ != nullptr) {
+            self.setValue(&MessageModel::status, MessageModel::SendStatus::SENDING);
+        } else {
+            self.setValue(&MessageModel::status, MessageModel::SendStatus::UNREAD);
+        }
+    }
+}
+
+AString MessageModel::sendStatusToIcon(MessageModel::SendStatus status) {
+    switch (status) {
+        case SendStatus::NONE: return "";
+        case SendStatus::SENDING:
+            return TGIco::CHECKMARK5_CLOCK;
+        case SendStatus::UNREAD:
+            return TGIco::UNREAD;
+        case SendStatus::READ:
+            return TGIco::READ;
+    }
+    return "";
 }

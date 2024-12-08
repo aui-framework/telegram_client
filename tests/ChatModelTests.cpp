@@ -23,10 +23,10 @@
 
 TEST(ChatModel, Insert) {
     auto chat = _new<Chat>(ChatModel{});
-    auto msg1 = (*chat)->getMessage(1);
-    (*chat)->getMessage(0);
-    (*chat)->getMessage(2);
+    auto msg1 = (*chat)->getMessageOrNew(1);
+    (*chat)->getMessageOrNew(0);
+    (*chat)->getMessageOrNew(2);
     EXPECT_EQ((*msg1)->id, 1);
-    auto msg2 = (*chat)->getMessage(1);
+    auto msg2 = (*chat)->getMessageOrNew(1);
     EXPECT_EQ(msg1, msg2);
 }

@@ -29,13 +29,17 @@
 #include <AUI/View/ASpacerFixed.h>
 #include <AUI/View/ADrawableView.h>
 #include "ChatView.h"
+#include "TGIco.h"
 
 using namespace ass;
 using namespace declarative;
 
 ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::move(chat)) {
-    mInput = _new<ATextArea>();
-    mInput->focus();
+    mInput = _new<ATextArea>() let {
+        it->focus();
+        connect(it->actionButtonPressed, me::send);
+    };
+
     setContents(Vertical::Expanding {
         Horizontal {
             Centered{
@@ -55,8 +59,8 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
             Margin { {}, {}, 1_px, 1_px }
         } << ".container_color",
-        AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
-            it->verticalScrollbar()->setStickToEnd(true);
+        mScrollArea = AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
+            it->setStickToEnd(true);
             it with_style {
                MinSize(200_dp),
             };
@@ -83,30 +87,43 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 
     mApp->sendQuery(td::td_api::getChatHistory((*mChat)->id, (*mChat)->lastMessage ? (*(*mChat)->lastMessage)->id : 0, 0, 99, false), [this](td::td_api::messages& messages) {
         for (auto& message : messages.messages_) {
-            auto msg = (*mChat)->getMessage(message->id_);
+            auto msg = (*mChat)->getMessageOrNew(message->id_);
             MessageModel::populateFrom(*msg, std::move(message));
         }
 
         ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
-            auto view = AText::fromString("") with_style {
+            auto text = AText::fromString("") with_style {
                 MaxSize { 400_dp, {} },
                 Expanding(0, 0),
+                Padding { 7_dp, 9_dp, 4_dp },
+                Margin { 0 },
             } && (*message)(&MessageModel::text, [&message = *message](AText& view, const AString& data) {
                 view.setItems({
                     data,
                     Horizontal {
-                        _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 8_pt } }
-                            && message(&MessageModel::date, [](std::chrono::system_clock::time_point time) {
-                                 return "{:%H:%M}"_format(time);
-                               }),
+                        Horizontal{
+                            _new<ALabel>() with_style{Margin{0}, Padding{0}, FontSize{12_dp}}
+                                && message(&MessageModel::date, [](std::chrono::system_clock::time_point time) {
+                                    return "{:%H:%M}"_format(time);
+                                }),
+                        } with_style { Opacity { 0.3f }, },
+                       _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp  } } << ".status" && message(&MessageModel::status, MessageModel::sendStatusToIcon),
                     } with_style {
-                        Margin { 4_dp, {}, {}, 4_dp, },
+                        Margin { 3_dp, {}, -2_dp, 4_dp, },
                         AFloat::RIGHT,
-                        Opacity { 0.3f },
                     },
                 });
             });
-            view << ".message";
+            _<AViewContainer> view = Vertical {
+                text,
+            } << ".message";
+            if ((*message)->photo) {
+                view->addView(0, _new<ADrawableView>((*message)->photo->drawable) with_style {
+                    MinSize(AMetric((*message)->photo->size.x, AMetric::T_DP), AMetric((*message)->photo->size.y, AMetric::T_DP)),
+                    Expanding(1, 1),
+                });
+                view << ".message_has_photo";
+            }
 
             // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
             message->addObserverNoInitialCall(&MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
@@ -132,5 +149,20 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 }
 
 void ChatView::send() {
-
+    auto text = mInput->text();
+    mInput->setText("");
+    auto msg = td::td_api::make_object<td::td_api::sendMessage>();
+    msg->chat_id_ = (*mChat)->id;
+    msg->input_message_content_ = [&] {
+        auto content = td::td_api::make_object<td::td_api::inputMessageText>();
+        content->text_ = [&] {
+            auto t = td::td_api::make_object<td::td_api::formattedText>();
+            t->text_ = text.toStdString();
+            return t;
+        }();
+        return content;
+    }();
+    mApp->sendQuery(std::move(msg), [&](td::td_api::message&) {
+        mScrollArea->verticalScrollbar()->scrollToEnd();
+    });
 }

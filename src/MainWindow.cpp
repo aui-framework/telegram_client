@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "MainWindow.h"
+#include "view/TGIco.h"
 #include <AUI/Util/UIBuildingHelpers.h>
 #include <AUI/View/ALabel.h>
 #include <AUI/View/AButton.h>
@@ -39,9 +40,15 @@ MainWindow::MainWindow(_<App> app): AWindow("AUI Telegram Client", 800_dp, 500_d
          BackgroundSolid { nullptr },
          Border { nullptr },
          BoxShadow { nullptr },
-         FontRendering::SUBPIXEL,
+         FontRendering::ANTIALIASING,
       },
-
+      {
+          t<TGIco>(),
+          FontRendering::ANTIALIASING,
+          Font { ":tgico.ttf" },
+          Padding { 0 },
+          Margin { 0 },
+      },
 
       {
          t<AWindowBase>(),
@@ -55,13 +62,20 @@ MainWindow::MainWindow(_<App> app): AWindow("AUI Telegram Client", 800_dp, 500_d
       {
          c(".message"),
          BackgroundSolid { 0x172433_rgb },
-         Padding { 6_dp, 9_dp, 4_dp },
-         BorderRadius { 12_dp },
+         BorderRadius { 13_dp },
          Margin { 4_dp },
       },
       {
          c(".message_mine"),
          BackgroundSolid { 0x2a5277_rgb },
+      },
+      {
+          c(".message_has_photo"),
+          AOverflow::HIDDEN,
+      },
+      {
+         c(".message") >> c(".status"),
+         TextColor { 0x589fd7_rgb },
       },
 
       {

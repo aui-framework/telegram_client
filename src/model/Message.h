@@ -18,16 +18,32 @@
 
 #include <AUI/Util/ADataBinding.h>
 #include <td/telegram/td_api.h>
+#include <AUI/Image/IDrawable.h>
+
 
 struct MessageModel {
     int64_t id;
     AString text;
     int64_t userId = 0;
     std::chrono::system_clock::time_point date;
+    struct Photo {
+        _<IDrawable> drawable;
+        glm::ivec2 size;
+    };
+    AOptional<Photo> photo;
+    bool isOutgoing;
+
+    enum class SendStatus {
+        NONE, // typically incoming message
+        SENDING, // shows clock icon
+        UNREAD, // server has received the message, shows single checkmark icon
+        READ, // someone read the message, shows two checkmarks icon
+    } status = SendStatus::NONE;
+
+    static AString sendStatusToIcon(SendStatus status);
 
     static AString makePreviewText(td::td_api::message* message);
     static void populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message);
-
 };
 
 using Message = ADataBinding<MessageModel>;
