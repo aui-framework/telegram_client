@@ -63,7 +63,7 @@ void MainView::inflateChatPlaceholder() {
         Label { "Select a chat to start messaging" } with_style {
             FixedSize({}, 22_dp),
             Padding { {}, 12_dp },
-            BorderRadius(22_dp / 2),
+            BorderRadius(22_dp / 2.f),
         } << ".container_color",
     });
 }

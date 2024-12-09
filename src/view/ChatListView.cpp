@@ -50,7 +50,7 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
                     Centered{
                         Icon{} with_style{
                             FixedSize(36_dp),
-                            BorderRadius(36_dp / 2.0),
+                            BorderRadius(36_dp / 2.f),
                             AOverflow::HIDDEN,
                         } && chat(&ChatModel::thumbnail),
                     },
@@ -60,7 +60,7 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
                             Horizontal {
                                 Label{} with_style { Expanding(), ATextOverflow::ELLIPSIS } && chat(&ChatModel::previewText),
                                 Label{} with_style {
-                                    MinSize { 16_dp - 4_dp * 2, 16_dp },
+                                    MinSize { 16_dp - 4_dp * 2.f, 16_dp },
                                     FontSize { 8_pt },
                                     BorderRadius { 16_dp / 2.f },
                                     Padding { 0, 4_dp },
