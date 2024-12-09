@@ -45,24 +45,7 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
 }
 
 void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message) {
-    self.setValue(&MessageModel::text, [&] {
-        AString result;
-        td::td_api::downcast_call(*message->content_, aui::lambda_overloaded{
-                [&](td::td_api::messageText& u) {
-                    result = u.text_->text_;
-                },
-                [&](td::td_api::messagePhoto& u) {
-                    result = u.caption_->text_;
-                    auto& size = u.photo_->sizes_.front();
-                    self.setValue(&MessageModel::photo, MessageModel::Photo {
-                        .drawable = _new<AImageDrawable>(util::image::from(*u.photo_->minithumbnail_)),
-                        .size = { size->width_, size->height_ },
-                    });
-                },
-                [](auto&) {},
-        });
-        return result;
-    }());
+    self.setValue(&MessageModel::content, makeContent(message->content_));
     self.setValue(&MessageModel::date, std::chrono::system_clock::from_time_t(message->date_));
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
         [&](td::td_api::messageSenderUser& u) {
@@ -80,6 +63,25 @@ void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::ob
     }
 }
 
+MessageModel::Content MessageModel::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
+    Content result;
+    td::td_api::downcast_call(*content, aui::lambda_overloaded{
+            [&](td::td_api::messageText& u) {
+                result.text = u.text_->text_;
+            },
+            [&](td::td_api::messagePhoto& u) {
+                result.text = u.caption_->text_;
+                auto& size = u.photo_->sizes_.front();
+                result.photo = Content::Photo {
+                    .drawable = _new<AImageDrawable>(util::image::from(*u.photo_->minithumbnail_)),
+                    .size = { size->width_, size->height_ },
+                };
+            },
+            [](auto&) {},
+    });
+    return result;
+}
+
 AString MessageModel::sendStatusToIcon(MessageModel::SendStatus status) {
     switch (status) {
         case SendStatus::NONE: return "";
@@ -92,3 +94,4 @@ AString MessageModel::sendStatusToIcon(MessageModel::SendStatus status) {
     }
     return "";
 }
+

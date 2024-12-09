@@ -32,6 +32,9 @@ private:
     _<AScrollArea> mScrollArea;
     _<ATextArea> mInput;
     _<AViewContainer> mContentsWrap;
+    AVector<int64_t /* message id */> mReadMessagesBatch;
 
+    template<typename MessageModelT = MessageModel>
+    _<AViewContainer> makeMessage(ADataBinding<MessageModelT>& message);
     void send();
 };

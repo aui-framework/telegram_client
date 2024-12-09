@@ -129,6 +129,15 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                             .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? _new<AImageDrawable>(util::image::from(*u.chat_->photo_->minithumbnail_)) : nullptr,
                             .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
                             .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
+                            .type = [&] {
+                                ChatModel::Type result;
+                                td::td_api::downcast_call(*u.chat_->type_, aui::lambda_overloaded{
+                                    [&](td::td_api::userTypeRegular&) { result = ChatModel::TypeUserRegular{}; },
+                                    [&](td::td_api::chatTypeSupergroup& i) { result = ChatModel::TypeSupergroup{ .supergroupId = i.supergroup_id_, .isChannel = i.is_channel_ }; },
+                                    Stub{},
+                                });
+                                return result;
+                            }(),
                             .unreadCount = u.chat_->unread_count_,
                         });
                         if (u.chat_->last_message_) {

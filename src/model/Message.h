@@ -23,14 +23,17 @@
 
 struct MessageModel {
     int64_t id;
-    AString text;
     int64_t userId = 0;
     std::chrono::system_clock::time_point date;
-    struct Photo {
-        _<IDrawable> drawable;
-        glm::ivec2 size;
-    };
-    AOptional<Photo> photo;
+
+    struct Content {
+        AString text;
+        struct Photo {
+            _<IDrawable> drawable;
+            glm::ivec2 size;
+        };
+        AOptional<Photo> photo;
+    } content;
     bool isOutgoing;
 
     enum class SendStatus {
@@ -44,6 +47,7 @@ struct MessageModel {
 
     static AString makePreviewText(td::td_api::message* message);
     static void populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message);
+    static Content makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content);
 };
 
 using Message = ADataBinding<MessageModel>;

@@ -34,7 +34,6 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
     setExtraStylesheet(AStylesheet {
         {
             t<ALabel>(),
-            ATextOverflow::ELLIPSIS,
         },
         {
             t<AScrollArea>(),
@@ -51,14 +50,26 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
                     Centered{
                         Icon{} with_style{
                             FixedSize(36_dp),
-                            BorderRadius(36_dp / 2),
+                            BorderRadius(36_dp / 2.0),
                             AOverflow::HIDDEN,
                         } && chat(&ChatModel::thumbnail),
                     },
-                    Centered{
+                    Centered::Expanding {
                         Vertical::Expanding{
-                            Label{} && chat(&ChatModel::title),
-                            Label{} && chat(&ChatModel::previewText),
+                            Label{} with_style { ATextOverflow::ELLIPSIS }&& chat(&ChatModel::title),
+                            Horizontal {
+                                Label{} with_style { Expanding(), ATextOverflow::ELLIPSIS } && chat(&ChatModel::previewText),
+                                Label{} with_style {
+                                    MinSize { 16_dp - 4_dp * 2, 16_dp },
+                                    FontSize { 8_pt },
+                                    BorderRadius { 16_dp / 2.f },
+                                    Padding { 0, 4_dp },
+                                    ATextAlign::CENTER,
+                                } << ".unread_count" && chat(&ChatModel::unreadCount, AString::number<int>)
+                                                     && chat(&ChatModel::unreadCount, [](int count) {
+                                                         return count > 0 ? Visibility::VISIBLE : Visibility::GONE;
+                                                     }),
+                            },
                         }
                     },
                 }.connect(&AView::clicked, this, [this, chat] {

@@ -15,27 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //
-// Created by alex2772 on 11/13/24.
+// Created by alex2772 on 12/9/24.
 //
-#include <range/v3/all.hpp>
-#include "Chat.h"
 
-const _<Message>& ChatModel::getMessageOrNew(int64_t id) const {
-    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
-    if (l != messages.end()) {
-        if ((**l)->id == id) {
-            return *l;
-        }
-    }
-    return *messages->insert(l, _new<Message>(MessageModel{ .id = id }));
-}
-
-_<Message> ChatModel::getMessage(int64_t id) const {
-    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
-    if (l != messages.end()) {
-        if ((**l)->id == id) {
-            return *l;
-        }
-    }
-    return nullptr;
-}
+#include "MessageSponsored.h"

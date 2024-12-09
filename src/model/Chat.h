@@ -21,6 +21,7 @@
 #include <AUI/Image/IDrawable.h>
 #include <AUI/Model/AListModel.h>
 #include "Message.h"
+#include "MessageSponsored.h"
 
 struct ChatModel {
     int64_t id;
@@ -30,9 +31,18 @@ struct ChatModel {
     _<IDrawable> thumbnail;
     int64_t inboxLastReadMessage;
     int64_t outboxLastReadMessage;
+
+    struct TypeUserRegular {};
+    struct TypeSupergroup {
+        int64_t supergroupId;
+        bool isChannel;
+    };
+    using Type = std::variant<TypeUserRegular, TypeSupergroup>;
+    Type type;
     int unreadCount;
 
     _<AListModel<_<Message>>> messages = _new<AListModel<_<Message>>>();
+    _<AListModel<_<MessageSponsored>>> sponsoredMessages = _new<AListModel<_<MessageSponsored>>>();
 
     const _<Message>& getMessageOrNew(int64_t id) const;
     _<Message> getMessage(int64_t id) const;

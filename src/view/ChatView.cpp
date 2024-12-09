@@ -34,6 +34,85 @@
 using namespace ass;
 using namespace declarative;
 
+template<typename MessageModelT>
+_<AViewContainer> ChatView::makeMessage(ADataBinding<MessageModelT>& message) {
+    auto text = AText::fromString("") with_style {
+            MaxSize { 400_dp, {} },
+            Expanding(0, 0),
+            Padding { 7_dp, 9_dp, 4_dp },
+            Margin { 0 },
+    } && message(&MessageModelT::content, [&message](AText& view, const MessageModel::Content& data) {
+        view.setItems({
+                              data.text,
+                              Horizontal {
+                                      [&]() -> aui::ui_building::ViewGroup {
+                                          if constexpr (requires {MessageModelT::date; }) {
+                                              return {
+                                                      Horizontal{
+                                                              _new<ALabel>() with_style{ Margin{0}, Padding{0}, FontSize{12_dp} } &&
+                                                              message(&MessageModelT::date,
+                                                                      [](std::chrono::system_clock::time_point time) {
+                                                                          return "{:%H:%M}"_format(time);
+                                                                      })
+                                                      } with_style{Opacity{0.3f},},
+                                                      _new<TGIco>() with_style{FontSize{14_dp}, FixedSize{{}, 14_dp}} << ".status" &&
+                                                      message(&MessageModelT::status, MessageModelT::sendStatusToIcon),
+                                              };
+                                          }
+                                          if constexpr (requires { MessageModelT::isRecommended; } ) {
+                                              return {
+                                                      _new<ALabel>(message->isRecommended ? "recommended" : "sponsored") with_style{ Margin{0}, Padding{0}, FontSize{12_dp}, Opacity{ 0.3f } }
+                                              };
+                                          }
+                                          return {};
+                                      }(),
+                              } with_style {
+                                      Margin { 3_dp, {}, -2_dp, 4_dp, },
+                                      AFloat::RIGHT,
+                              },
+                      });
+    });
+    _<AViewContainer> view = Vertical {
+            text,
+    } << ".message";
+    if (message->content.photo) {
+        view->addView(0, _new<ADrawableView>(message->content.photo->drawable) with_style {
+                MinSize(AMetric(message->content.photo->size.x, AMetric::T_DP), AMetric(message->content.photo->size.y, AMetric::T_DP)),
+                Expanding(1, 1),
+        });
+        view << ".message_has_photo";
+    }
+
+    if ((*mChat)->inboxLastReadMessage < message->id) {
+        // let's track visibility of this message in order to update read status.
+        connect(mScrollArea->scrolled, [this, messageViewWeak = view->weakPtr(), messageId = message->id] {
+            auto messageView = messageViewWeak.lock();
+            if (!messageView) {
+                AObject::disconnect();
+                return;
+            }
+            auto rectScrollArea = ARect<int>::fromTopLeftPositionAndSize(mScrollArea->getPositionInWindow(), mScrollArea->getSize());
+            auto rectMessage = ARect<int>::fromTopLeftPositionAndSize(messageView->getPositionInWindow(), messageView->getSize());
+            if (ranges::all_of(rectMessage.vertices(), [&](auto point) { return rectScrollArea.isIntersects(point); })) {
+                mChat->setValue(&ChatModel::inboxLastReadMessage, glm::max((*mChat)->inboxLastReadMessage, messageId));
+                mReadMessagesBatch << messageId;
+                AObject::disconnect();
+                ui_thread {
+                    auto messagesToMarkViewed = std::exchange(mReadMessagesBatch, {});
+                    if (messagesToMarkViewed.empty()) {
+                        return;
+                    }
+                    td::td_api::viewMessages viewMessages;
+                    viewMessages.chat_id_ = (*mChat)->id;
+                    viewMessages.message_ids_ = std::move(messagesToMarkViewed);
+                    mApp->sendQuery(std::move(viewMessages));
+                };
+            }
+        });
+    }
+    return view;
+}
+
 ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::move(chat)) {
     mInput = _new<ATextArea>() let {
         it->focus();
@@ -57,7 +136,16 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             },
             Vertical::Expanding {
                 Label {} && mChat(&ChatModel::title),
-                Label { "last seen" },
+                [&] {
+                    return std::visit(aui::lambda_overloaded {
+                        [](const ChatModel::TypeUserRegular& regular) -> _<AView> {
+                            return Label { "last seen" };
+                        },
+                        [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> {
+                            return Label { "Supergroup" };
+                        },
+                    }, (*mChat)->type);
+                }(),
             },
         } with_style {
             Padding { 4_dp },
@@ -87,7 +175,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 
     setExtraStylesheet(AStylesheet {
         {
-            c(".message_mine"),
+
         },
     });
 
@@ -97,85 +185,56 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             MessageModel::populateFrom(*msg, std::move(message));
         }
 
-        auto readMessagesBatch = _new<AVector<int64_t /* message id */>>();
-        ALayoutInflater::inflate(mContentsWrap, AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
-            auto text = AText::fromString("") with_style {
-                MaxSize { 400_dp, {} },
-                Expanding(0, 0),
-                Padding { 7_dp, 9_dp, 4_dp },
-                Margin { 0 },
-            } && (*message)(&MessageModel::text, [&message = *message](AText& view, const AString& data) {
-                view.setItems({
-                    data,
-                    Horizontal {
-                        Horizontal{
-                            _new<ALabel>() with_style{Margin{0}, Padding{0}, FontSize{12_dp}}
-                                && message(&MessageModel::date, [](std::chrono::system_clock::time_point time) {
-                                    return "{:%H:%M}"_format(time);
-                                }),
-                        } with_style { Opacity { 0.3f }, },
-                       _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp  } } << ".status" && message(&MessageModel::status, MessageModel::sendStatusToIcon),
-                    } with_style {
-                        Margin { 3_dp, {}, -2_dp, 4_dp, },
-                        AFloat::RIGHT,
-                    },
-                });
-            });
-            _<AViewContainer> view = Vertical {
-                text,
-            } << ".message";
-            if ((*message)->photo) {
-                view->addView(0, _new<ADrawableView>((*message)->photo->drawable) with_style {
-                    MinSize(AMetric((*message)->photo->size.x, AMetric::T_DP), AMetric((*message)->photo->size.y, AMetric::T_DP)),
-                    Expanding(1, 1),
-                });
-                view << ".message_has_photo";
-            }
+        ALayoutInflater::inflate(mContentsWrap,
+            Vertical {
+                AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
+                    auto view = makeMessage(*message);
 
-            if ((*mChat)->inboxLastReadMessage < (*message)->id) {
-                // let's track visibility of this message in order to update read status.
-                connect(mScrollArea->scrolled, view, [this, scrollArea = mScrollArea.get(), messageView = view.get(), app = mApp, readMessagesBatch, message] {
-                    auto rectScrollArea = ARect<int>::fromTopLeftPositionAndSize(scrollArea->getPositionInWindow(), scrollArea->getSize());
-                    auto rectMessage = ARect<int>::fromTopLeftPositionAndSize(messageView->getPositionInWindow(), messageView->getSize());
-                    if (ranges::all_of(rectMessage.vertices(), [&](auto point) { return rectScrollArea.isIntersects(point); })) {
-                        mChat->setValue(&ChatModel::inboxLastReadMessage, glm::max((*mChat)->inboxLastReadMessage, (*message)->id));
-                        *readMessagesBatch << (*message)->id;
-                        AObject::disconnect();
-                        ui_thread {
-                            auto messagesToMarkViewed = std::exchange(*readMessagesBatch, {});
-                            if (messagesToMarkViewed.empty()) {
-                                return;
-                            }
-                            td::td_api::viewMessages viewMessages;
-                            viewMessages.chat_id_ = (*mChat)->id;
-                            viewMessages.message_ids_ = std::move(messagesToMarkViewed);
-                            app->sendQuery(std::move(viewMessages));
+
+                    // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
+                    message->addObserverNoInitialCall(&MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
+                        auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) { return (*msg)->id; });
+                        if (it != chat->messages.end()) {
+                            chat->messages->invalidate(it);
+                        }
+                    });
+
+                    const bool mine = (*message)->userId == mApp->myId();
+                    if (mine) {
+                        view << ".message_mine";
+                        return Horizontal {
+                            SpacerExpanding(),
+                            view,
                         };
                     }
-                });
+                    return Horizontal {
+                        view,
+                    };
+                },
+                AUI_DECLARATIVE_FOR(message, (*mChat)->sponsoredMessages, AVerticalLayout) {
+                    auto view = makeMessage(*message);
+                    return Horizontal {
+                        view,
+                    };
+                },
             }
+        );
+    });
 
-            // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
-            message->addObserverNoInitialCall(&MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
-                auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) { return (*msg)->id; });
-                if (it != chat->messages.end()) {
-                    chat->messages->invalidate(it);
+    if (auto superGroup = std::get_if<ChatModel::TypeSupergroup>(&(*mChat)->type)) {
+        if (superGroup->isChannel) {
+            mApp->sendQuery(td::td_api::getChatSponsoredMessages((*mChat)->id), [&](td::td_api::sponsoredMessages& messages) {
+                (*mChat)->sponsoredMessages->clear();
+                for (auto& msg : messages.messages_) {
+                    (*mChat)->sponsoredMessages << _new<MessageSponsored>(MessageSponsoredModel {
+                        .id = msg->message_id_,
+                        .content = MessageModel::makeContent(msg->content_),
+                        .isRecommended = msg->is_recommended_,
+                    });
                 }
             });
-
-            const bool mine = (*message)->userId == mApp->myId();
-            if (mine) {
-                view << ".message_mine";
-                return Horizontal {
-                    SpacerExpanding(),
-                    view,
-                };
-            }
-            return Horizontal {
-                view,
-            };
-        });
-    });
+        }
+    }
 }
 
 void ChatView::send() {

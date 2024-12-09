@@ -81,6 +81,10 @@ MainWindow::MainWindow(_<App> app): AWindow("AUI Telegram Client", 800_dp, 500_d
       {
          t<AScrollbarHandle>(),
          BackgroundSolid { 0x4f555b_rgb },
+      },
+      {
+         c(".unread_count"),
+         BackgroundSolid { 0x4082bc_rgb },
       }
     });
 }
