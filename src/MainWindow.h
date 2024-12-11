@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <AUI/Platform/AWindow.h>
+#include <AUI/Platform/ACustomCaptionWindow.h>
 
 class App;
 
-class MainWindow: public AWindow {
+class MainWindow: public ACustomCaptionWindow {
 public:
     MainWindow(_<App> app);
 

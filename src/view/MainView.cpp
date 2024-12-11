@@ -18,56 +18,57 @@
 // Created by alex2772 on 11/13/24.
 //
 
+#include "MainView.h"
+
+#include <AUI/Util/ALayoutInflater.h>
 #include <AUI/Util/UIBuildingHelpers.h>
 #include <AUI/View/AButton.h>
+#include <AUI/View/ASpacerFixed.h>
 #include <view/TGIco.h>
-#include <AUI/Util/ALayoutInflater.h>
-#include "MainView.h"
+
 #include "ChatListView.h"
 #include "ChatView.h"
-
 
 using namespace declarative;
 using namespace ass;
 
 MainView::MainView(_<App> app) : mApp(std::move(app)) {
     setContents(Vertical {
-        Horizontal {
-            _new<AButton>("Logout").connect(&AView::clicked, me::logout),
-            _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
-        },
-        Horizontal::Expanding {
-            _new<ChatListView>(mApp) let {
+      Horizontal {
+        _new<AButton>("Logout").connect(&AView::clicked, me::logout),
+        _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
+      },
+      Horizontal::Expanding {
+        _new<ChatListView>(mApp) let {
                 it with_style {
-                    FixedSize{300_dp, {}},
+                    FixedSize { 300_dp, {} },
                 };
 
                 connect(it->chatSelected, me::presentChat);
             },
-            mChatWrap = Stacked::Expanding {},
-        } with_style {
-            LayoutSpacing(1_px),
-        },
+        mChatWrap = Stacked::Expanding {},
+      } with_style {
+        LayoutSpacing(1_px),
+      },
     });
 
     inflateChatPlaceholder();
 }
 
-void MainView::logout() {
-    mApp->sendQuery(td::td_api::logOut{});
-
-}
+void MainView::logout() { mApp->sendQuery(td::td_api::logOut {}); }
 
 void MainView::inflateChatPlaceholder() {
-    ALayoutInflater::inflate(mChatWrap, Centered {
-        Label { "Select a chat to start messaging" } with_style {
-            FixedSize({}, 22_dp),
-            Padding { {}, 12_dp },
-            BorderRadius(22_dp / 2.f),
-        } << ".container_color",
-    });
+    ALayoutInflater::inflate(
+        mChatWrap,
+        Centered {
+          Vertical {
+            Label { "Select a chat to start messaging" } with_style {
+              FixedSize({}, 22_dp),
+              Padding { {}, 12_dp },
+              BorderRadius(22_dp / 2.f),
+            } << ".container_color",
+          },
+        });
 }
 
-void MainView::presentChat(_<Chat> chat) {
-    ALayoutInflater::inflate(mChatWrap, _new<ChatView>(mApp, std::move(chat)));
-}
+void MainView::presentChat(_<Chat> chat) { ALayoutInflater::inflate(mChatWrap, _new<ChatView>(mApp, std::move(chat))); }
