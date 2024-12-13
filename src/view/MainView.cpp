@@ -24,6 +24,7 @@
 #include <AUI/Util/UIBuildingHelpers.h>
 #include <AUI/View/AButton.h>
 #include <AUI/View/ASpacerFixed.h>
+#include <AUI/View/ASplitter.h>
 #include <view/TGIco.h>
 
 #include "ChatListView.h"
@@ -38,18 +39,18 @@ MainView::MainView(_<App> app) : mApp(std::move(app)) {
         _new<AButton>("Logout").connect(&AView::clicked, me::logout),
         _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
       },
-      Horizontal::Expanding {
-        _new<ChatListView>(mApp) let {
-                it with_style {
-                    FixedSize { 300_dp, {} },
-                };
-
-                connect(it->chatSelected, me::presentChat);
-            },
-        mChatWrap = Stacked::Expanding {},
-      } with_style {
-        LayoutSpacing(1_px),
-      },
+      ASplitter::Horizontal()
+          .withItems({
+            _new<ChatListView>(mApp) let {
+                    it with_style { MinSize { 250_dp } };
+                    connect(it->chatSelected, me::presentChat);
+                },
+            mChatWrap = Stacked::Expanding {} with_style { MinSize { 500_dp } },
+          })
+          .build() with_style {
+            LayoutSpacing(1_px),
+            Expanding(),
+          },
     });
 
     inflateChatPlaceholder();
