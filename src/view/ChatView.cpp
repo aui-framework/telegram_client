@@ -145,7 +145,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             Centered {
               Icon {} with_style {
                 FixedSize(32_dp),
-                BorderRadius(16_dp),
+                BorderRadius{16_dp},
                 AOverflow::HIDDEN,
               } && mChat(&ChatModel::thumbnail),
             },

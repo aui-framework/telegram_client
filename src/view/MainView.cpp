@@ -48,7 +48,7 @@ MainView::MainView(_<App> app) : mApp(std::move(app)) {
             mChatWrap = Stacked::Expanding {} with_style { MinSize { 500_dp } },
           })
           .build() with_style {
-            LayoutSpacing(1_px),
+            LayoutSpacing{1_px},
             Expanding(),
           },
     });
@@ -66,7 +66,7 @@ void MainView::inflateChatPlaceholder() {
             Label { "Select a chat to start messaging" } with_style {
               FixedSize({}, 22_dp),
               Padding { {}, 12_dp },
-              BorderRadius(22_dp / 2.f),
+              BorderRadius{22_dp / 2.f},
             } << ".container_color",
           },
         });
