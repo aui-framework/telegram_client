@@ -62,7 +62,7 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
                     Centered{
                         Icon{} with_style{
                             FixedSize(36_dp),
-                            BorderRadius(36_dp / 2.f),
+                            BorderRadius{36_dp / 2.f},
                             AOverflow::HIDDEN,
                         } && chat(&ChatModel::thumbnail),
                     },
