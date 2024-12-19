@@ -17,20 +17,31 @@
 //
 // Created by alex2772 on 11/13/24.
 //
+
 #include <range/v3/all.hpp>
-#include <AUI/View/AScrollArea.h>
-#include <AUI/Util/ALayoutInflater.h>
-#include <AUI/View/AForEachUI.h>
-#include <AUI/Model/AListModel.h>
+
+#include "ChatListView.h"
+
 #include <AUI/Layout/AVerticalLayout.h>
+#include <AUI/Model/AListModel.h>
+#include <AUI/Util/ALayoutInflater.h>
 #include <AUI/Util/UIBuildingHelpers.h>
 #include <AUI/View/ADrawableView.h>
-#include "ChatListView.h"
+#include <AUI/View/AForEachUI.h>
+#include <AUI/View/AScrollArea.h>
+
+
+#include "SpacerForView.h"
 
 using namespace ass;
 using namespace declarative;
 
 ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
+    _<AViewContainer> contents = Centered::Expanding {};
+    setContents(Vertical {
+      _new<SpacerForView>(mApp) << ".container_color",
+      contents,
+    });
     setExtraStylesheet(AStylesheet {
         {
             t<ALabel>(),
@@ -39,12 +50,13 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
             t<AScrollArea>(),
         }
     });
-    mApp->sendQuery(td::td_api::getChats(nullptr, 20), [this](td::td_api::chats& chats) {
+
+    mApp->sendQuery(td::td_api::getChats(nullptr, 20), [this, contents](td::td_api::chats& chats) {
         auto model = AListModel<_<Chat>>::fromVector(chats.chat_ids_
             | ranges::view::transform([&](int64_t id) { return mApp->getChat(id); })
             | ranges::to_vector);
 
-        ALayoutInflater::inflate(*this, AScrollArea::Builder().withContents(
+        ALayoutInflater::inflate(contents, AScrollArea::Builder().withContents(
             AUI_DECLARATIVE_FOR(chat, model, AVerticalLayout) {
                 return Horizontal {
                     Centered{

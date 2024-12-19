@@ -35,10 +35,10 @@ using namespace ass;
 
 MainView::MainView(_<App> app) : mApp(std::move(app)) {
     setContents(Vertical {
-      Horizontal {
-        _new<AButton>("Logout").connect(&AView::clicked, me::logout),
-        _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
-      },
+//      Horizontal {
+//        _new<AButton>("Logout").connect(&AView::clicked, me::logout),
+//        _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
+//      },
       ASplitter::Horizontal()
           .withItems({
             _new<ChatListView>(mApp) let {

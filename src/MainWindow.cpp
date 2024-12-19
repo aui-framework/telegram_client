@@ -28,12 +28,12 @@
 
 using namespace declarative;
 
-MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client", 800_dp, 500_dp), mApp(std::move(app)) {
+MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client", 800_dp, 500_dp, true), mApp(std::move(app)) {
     getContentContainer()->setContents(Centered { Label { "Starting..." } });
+    *this << ".container_chat_background_color";
     setExtraStylesheet({
       {
         t<AWindowBase>(),
-        BackgroundSolid { 0x0d1520_rgb },
         Padding { 1_px },
         MinSize { 400_dp, 300_dp },
       },
@@ -46,6 +46,7 @@ MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client",
     getCaptionContainer()->setContents(Centered {
       Label { "Proof of concept. Not a production app" } with_style { Opacity(0.5f), TextColor { AColor::RED } },
     });
+    getContentContainer() << ".container_chat_background_color";
     getContentContainer()->setExtraStylesheet({
       // clear aui default styles.
       {
@@ -85,6 +86,10 @@ MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client",
       {
         c(".message") >> c(".status"),
         TextColor { 0x589fd7_rgb },
+      },
+      {
+        c(".container_chat_background_color"),
+        BackgroundSolid { 0x0d1520_rgb },
       },
 
       {

@@ -17,9 +17,7 @@
 //
 // Created by alex2772 on 11/13/24.
 //
-
 #include <range/v3/all.hpp>
-
 #include "ChatView.h"
 
 #include <AUI/Model/AListModel.h>
@@ -33,6 +31,7 @@
 #include <AUI/View/ATextField.h>
 
 
+#include "SpacerForView.h"
 #include "TGIco.h"
 
 using namespace ass;
@@ -138,51 +137,78 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
         mApp->sendQuery(std::move(query));
     }
 
-    setContents(Vertical::Expanding {
-      Horizontal {
-        Centered {
-          Icon {} with_style {
-            FixedSize(32_dp),
-            BorderRadius(16_dp),
-            AOverflow::HIDDEN,
-          } && mChat(&ChatModel::thumbnail),
-        },
+    _<AViewContainer> title = Stacked {
+        Stacked::Expanding {} with_style { Opacity(0.8f) } << ".container_color",
         Vertical::Expanding {
-          Label {} && mChat(&ChatModel::title),
-          [&] {
-              return std::visit(
-                  aui::lambda_overloaded {
-                    [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "last seen" }; },
-                    [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
-                  },
-                  (*mChat)->type);
-          }(),
-        },
-      } with_style {
-        Padding { 4_dp },
-        BorderLeft { 1_px, AColor::GRAY.opacify(0.3f) },
-        BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
-        Margin { {}, {}, 1_px, 1_px },
-      } << ".container_color",
-      mScrollArea =
-          AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
-              it->setStickToEnd(true);
-              it with_style {
-                  MinSize(200_dp),
-              };
+          _new<SpacerForView>(mApp),
+          Horizontal {
+            Centered {
+              Icon {} with_style {
+                FixedSize(32_dp),
+                BorderRadius(16_dp),
+                AOverflow::HIDDEN,
+              } && mChat(&ChatModel::thumbnail),
+            },
+            Vertical::Expanding {
+              Label {} && mChat(&ChatModel::title),
+              [&] {
+                  return std::visit(
+                      aui::lambda_overloaded {
+                        [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "last seen" }; },
+                        [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
+                      },
+                      (*mChat)->type);
+              }(),
+            },
+          } with_style {
+            Padding { 4_dp },
+            BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
+            Margin { {}, {}, 1_px, 1_px },
           },
-      Horizontal {
-        AScrollArea::Builder().withContents(mInput).build() with_style {
-          Expanding(1, 0),
-          MaxSize { {}, 300_dp },
         },
-        Vertical {
-          SpacerExpanding(),
-          Button { "Send" }.connect(&AView::clicked, me::send),
-        },
-      } with_style { Padding(8_dp) }
-          << ".container_color",
-    });
+    } with_style {
+        Backdrop { Backdrop::GaussianBlur { 64_dp } },
+    };
+    setContents(Stacked::Expanding {
+      Vertical::Expanding {
+          _new<SpacerForView>(title),
+          mScrollArea =
+              AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
+                  it->setStickToEnd(true);
+                  it with_style {
+                      MinSize(200_dp),
+                  };
+                  it->setExtraStylesheet({ {
+                    t<AScrollAreaViewport>(),
+                    AOverflow::VISIBLE,
+                  } });
+                  it << ".container_chat_background_color";
+              },
+          Stacked {
+              Stacked::Expanding {}
+              with_style { Opacity(0.8f) } << ".container_color", Horizontal::Expanding {
+                  AScrollArea::Builder().withContents(mInput).build() with_style {
+                    Expanding(1, 0),
+                    MaxSize { {}, 300_dp },
+                  },
+                  Vertical {
+                    SpacerExpanding(),
+                    Button { "Send" }.connect(&AView::clicked, me::send),
+                  },
+              } with_style {
+                  Padding(8_dp)
+              }
+          }
+          with_style {
+              Backdrop { Backdrop::GaussianBlur { 64_dp } },
+          },
+      },
+      Vertical::Expanding {
+          title,
+      },
+    } with_style {
+      AOverflow::HIDDEN,
+    } << ".container_color");
 
     mApp->sendQuery(
         td::td_api::getChatHistory(

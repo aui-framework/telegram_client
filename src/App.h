@@ -69,8 +69,9 @@ public:
     int64_t myId() const {
         return mMyId;
     }
+    const _<MainWindow>& window() const { return mWindow; }
 
-private:
+   private:
     _unique<td::ClientManager> mClientManager;
     int64_t mMyId = 0;
     td::ClientManager::ClientId mClientId;
