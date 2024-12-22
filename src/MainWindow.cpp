@@ -23,19 +23,21 @@
 #include <AUI/View/ADrawableView.h>
 #include <AUI/View/ALabel.h>
 #include <AUI/View/AScrollbar.h>
+#include <AUI/Util/ANoiseDrawable.h>
 
 #include "view/TGIco.h"
 
 using namespace declarative;
 
-MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client", 800_dp, 500_dp, true), mApp(std::move(app)) {
+MainWindow::MainWindow(_<App> app)
+  : ACustomCaptionWindow("AUI Telegram Client", 800_dp, 500_dp, true), mApp(std::move(app)) {
     getContentContainer()->setContents(Centered { Label { "Starting..." } });
     *this << ".container_chat_background_color";
     setExtraStylesheet({
       {
         t<AWindowBase>(),
         Padding { 1_px },
-        MinSize { 400_dp, 300_dp },
+        MinSize { 400_dp, 200_dp },
       },
       {
         c(".window-title"),
@@ -44,7 +46,9 @@ MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client",
     });
 
     getCaptionContainer()->setContents(Centered {
+#if !CLIENT_DEMO
       Label { "Proof of concept. Not a production app" } with_style { Opacity(0.5f), TextColor { AColor::RED } },
+#endif
     });
     getContentContainer() << ".container_chat_background_color";
     getContentContainer()->setExtraStylesheet({
@@ -68,6 +72,12 @@ MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client",
       {
         c(".container_color"),
         BackgroundSolid { 0x16202a_rgb },
+      },
+      {
+        c(".container_color_blur"),
+        BackgroundSolid { (0x16202a_rgb).transparentize(0.3f) },
+        Backdrop { Backdrop::GaussianBlur { 64_dp } },
+        BackgroundImage { _new<ANoiseDrawable>(), 0x02ffffff_argb },
       },
       {
         c(".message"),
@@ -103,4 +113,6 @@ MainWindow::MainWindow(_<App> app) : ACustomCaptionWindow("AUI Telegram Client",
     });
 }
 
-void MainWindow::present(_<AView> view) { ALayoutInflater::inflate(getContentContainer(), std::move(view)); }
+void MainWindow::present(_<AView> view) {
+    ALayoutInflater::inflate(getContentContainer(), std::move(view));
+}

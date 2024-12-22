@@ -2,18 +2,21 @@
 cmake_minimum_required(VERSION 3.16)
 project(telegram_client)
 
+option(CLIENT_DEMO OFF "Demo mode (for a screenshot)")
 set(TELEGRAM_API_ID "" CACHE STRING "telegram api id")
 set(TELEGRAM_API_HASH "" CACHE STRING "telegram api hash")
 
-if(NOT TELEGRAM_API_ID)
-    message(FATAL_ERROR "TELEGRAM_API_ID is mandatory.")
+if (NOT CLIENT_DEMO)
+    if(NOT TELEGRAM_API_ID)
+        message(FATAL_ERROR "TELEGRAM_API_ID is mandatory.")
+    endif()
+
+    if(NOT TELEGRAM_API_HASH)
+        message(FATAL_ERROR "TELEGRAM_API_HASH is mandatory.")
+    endif()
 endif()
 
-if(NOT TELEGRAM_API_HASH)
-    message(FATAL_ERROR "TELEGRAM_API_HASH is mandatory.")
-endif()
-
-set(AUI_VERSION 403a268f13bf6649294945b72ec0003bb65a5f68)
+set(AUI_VERSION c7505b310783e249ec6bf8c04b114cccabfdd69e)
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -40,7 +43,12 @@ aui_executable(${PROJECT_NAME})
 # Link required libs
 aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views Td::TdStatic)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE TELEGRAM_API_ID=${TELEGRAM_API_ID} TELEGRAM_API_HASH=${TELEGRAM_API_HASH})
+if (CLIENT_DEMO)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CLIENT_DEMO=1)
+    add_subdirectory(demo)
+else()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TELEGRAM_API_ID=${TELEGRAM_API_ID} TELEGRAM_API_HASH=${TELEGRAM_API_HASH} CLIENT_DEMO=0)
+endif()
 
 aui_compile_assets(${PROJECT_NAME})
 aui_enable_tests(${PROJECT_NAME})

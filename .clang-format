@@ -8,15 +8,22 @@ SpaceAfterCStyleCast: true
 UseTab: Never
 # if (x) doStuff()  is not allowed, bad style
 AllowShortIfStatementsOnASingleLine: false
-# 
 AlignTrailingComments: true
 SpacesBeforeTrailingComments: 3
 AlignConsecutiveMacros: Consecutive
+
 # use \n instead of \r\n
 UseCRLF: false
 
+AccessModifierOffset: -4
+EmptyLineBeforeAccessModifier: Always
+EmptyLineAfterAccessModifier: Never
+
 NamespaceIndentation: None
 BreakConstructorInitializers: BeforeComma
+
+# we have some problems with ranges-v3 and AUI's let, so keep it disabled
+SortIncludes: Never
 
 
 ################################################# UI BUILDING ##########################################################
@@ -51,7 +58,6 @@ BreakBeforeBinaryOperators: None
 # fix AUI's scary macros.
 Macros:
   - let=+[]
-  - ui_thread=[]
   - async=[]
   - AUI_DECLARATIVE_FOR(a,b,c)=[]
   - AUI_DECLARATIVE_FOR_EX(a,b,c)=[]

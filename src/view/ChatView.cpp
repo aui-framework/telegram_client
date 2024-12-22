@@ -137,78 +137,106 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
         mApp->sendQuery(std::move(query));
     }
 
-    _<AViewContainer> title = Stacked {
-        Stacked::Expanding {} with_style { Opacity(0.8f) } << ".container_color",
-        Vertical::Expanding {
-          _new<SpacerForView>(mApp),
-          Horizontal {
-            Centered {
-              Icon {} with_style {
-                FixedSize(32_dp),
-                BorderRadius{16_dp},
-                AOverflow::HIDDEN,
-              } && mChat(&ChatModel::thumbnail),
-            },
-            Vertical::Expanding {
-              Label {} && mChat(&ChatModel::title),
-              [&] {
-                  return std::visit(
-                      aui::lambda_overloaded {
-                        [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "last seen" }; },
-                        [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
-                      },
-                      (*mChat)->type);
-              }(),
-            },
-          } with_style {
-            Padding { 4_dp },
-            BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
-            Margin { {}, {}, 1_px, 1_px },
+    _<AViewContainer> title = Vertical {
+        _new<SpacerForView>(mApp),
+        Horizontal {
+          Centered {
+            Icon {} with_style {
+              FixedSize(32_dp),
+              BorderRadius(16_dp),
+              AOverflow::HIDDEN,
+            } && mChat(&ChatModel::thumbnail),
           },
+          Vertical::Expanding {
+            Label {} && mChat(&ChatModel::title),
+            [&] {
+                return std::visit(
+                    aui::lambda_overloaded {
+                      [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "2 online" }; },
+                      [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
+                    },
+                    (*mChat)->type);
+            }(),
+          },
+        } with_style {
+          Padding { 4_dp },
+          BorderBottom { 1_px, AColor::GRAY.opacify(0.3f) },
+          Margin { {}, {}, 1_px, 1_px },
         },
-    } with_style {
-        Backdrop { Backdrop::GaussianBlur { 64_dp } },
-    };
-    setContents(Stacked::Expanding {
-      Vertical::Expanding {
-          _new<SpacerForView>(title),
-          mScrollArea =
-              AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
-                  it->setStickToEnd(true);
-                  it with_style {
-                      MinSize(200_dp),
-                  };
-                  it->setExtraStylesheet({ {
-                    t<AScrollAreaViewport>(),
-                    AOverflow::VISIBLE,
-                  } });
-                  it << ".container_chat_background_color";
+    } << ".container_color_blur";
+    setContents(
+        Stacked::Expanding {
+          Vertical::Expanding {
+            _new<SpacerForView>(title),
+            mScrollArea =
+                AScrollArea::Builder().withContents(mContentsWrap = Stacked {}).withExpanding().build() let {
+                    it->setStickToEnd(true);
+                    it with_style {
+                        MinSize(200_dp),
+                    };
+                    it->setExtraStylesheet({ {
+                      t<AScrollAreaViewport>(),
+                      AOverflow::VISIBLE,
+                    } });
+                    it << ".container_chat_background_color";
+                },
+            Horizontal {
+              AScrollArea::Builder().withContents(mInput).build() with_style {
+                Expanding(1, 0),
+                MaxSize { {}, 300_dp },
+                Padding { 8_dp },
               },
-          Stacked {
-              Stacked::Expanding {}
-              with_style { Opacity(0.8f) } << ".container_color", Horizontal::Expanding {
-                  AScrollArea::Builder().withContents(mInput).build() with_style {
-                    Expanding(1, 0),
-                    MaxSize { {}, 300_dp },
-                  },
-                  Vertical {
-                    SpacerExpanding(),
-                    Button { "Send" }.connect(&AView::clicked, me::send),
-                  },
-              } with_style {
-                  Padding(8_dp)
-              }
-          }
-          with_style {
-              Backdrop { Backdrop::GaussianBlur { 64_dp } },
+              Vertical {
+                SpacerExpanding(),
+                Button { "Send" }.connect(&AView::clicked, me::send),
+              } with_style { Padding(8_dp) },
+            } << ".container_color_blur",
           },
-      },
-      Vertical::Expanding {
-          title,
-      },
-    } with_style {
-      AOverflow::HIDDEN,
-    } << ".container_color");
+          Vertical::Expanding {
+            title,
+          },
+        } with_style {
+          AOverflow::HIDDEN,
+        }
+        << ".container_color");
+
+
+    ALayoutInflater::inflate(
+        mContentsWrap,
+        Vertical {
+          AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
+              auto view = makeMessage(*message);
+
+              // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
+              message->addObserverNoInitialCall(
+                  &MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
+                      auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) {
+                          return (*msg)->id;
+                      });
+                      if (it != chat->messages.end()) {
+                          chat->messages->invalidate(it);
+                      }
+                  });
+
+              const bool mine = (*message)->userId == mApp->myId();
+              if (mine) {
+                  view << ".message_mine";
+                  return Horizontal {
+                      SpacerExpanding(),
+                      view,
+                  };
+              }
+              return Horizontal {
+                  view,
+              };
+          },
+          AUI_DECLARATIVE_FOR(message, (*mChat)->sponsoredMessages, AVerticalLayout) {
+              auto view = makeMessage(*message);
+              return Horizontal {
+                  view,
+              };
+          },
+        });
 
     mApp->sendQuery(
         td::td_api::getChatHistory(
@@ -219,43 +247,8 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                 MessageModel::populateFrom(*msg, std::move(message));
             }
 
-            ALayoutInflater::inflate(
-                mContentsWrap,
-                Vertical {
-                  AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
-                      auto view = makeMessage(*message);
-
-                      // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
-                      message->addObserverNoInitialCall(
-                          &MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
-                              auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) {
-                                  return (*msg)->id;
-                              });
-                              if (it != chat->messages.end()) {
-                                  chat->messages->invalidate(it);
-                              }
-                          });
-
-                      const bool mine = (*message)->userId == mApp->myId();
-                      if (mine) {
-                          view << ".message_mine";
-                          return Horizontal {
-                              SpacerExpanding(),
-                              view,
-                          };
-                      }
-                      return Horizontal {
-                          view,
-                      };
-                  },
-                  AUI_DECLARATIVE_FOR(message, (*mChat)->sponsoredMessages, AVerticalLayout) {
-                      auto view = makeMessage(*message);
-                      return Horizontal {
-                          view,
-                      };
-                  },
-                });
         });
+
 
     if (auto superGroup = std::get_if<ChatModel::TypeSupergroup>(&(*mChat)->type)) {
         if (superGroup->isChannel) {

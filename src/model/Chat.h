@@ -28,6 +28,8 @@ struct ChatModel {
     AString title;
     AString previewText;
     _<Message> lastMessage;
+    MessageModel::SendStatus lastSendStatus;
+    AString time;
     _<IDrawable> thumbnail;
     int64_t inboxLastReadMessage;
     int64_t outboxLastReadMessage;

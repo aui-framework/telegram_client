@@ -16,19 +16,22 @@
 
 #pragma once
 
-
 #include <AUI/View/AViewContainer.h>
 #include "App.h"
+#include "ChatListView.h"
 
-class MainView: public AViewContainer {
+class MainView : public AViewContainer {
 public:
     MainView(_<App> app);
 
     void logout();
 
+    const _<ChatListView>& chatListView() const { return mChatListView; }
+
 private:
     _<App> mApp;
     _<AViewContainer> mChatWrap;
+    _<ChatListView> mChatListView;
 
     void inflateChatPlaceholder();
 

@@ -44,6 +44,7 @@ App::App(): mUpdateTimer(_new<ATimer>(100ms)) {
 }
 
 void App::initClientManager() {
+#if !CLIENT_DEMO
     mClientManager = std::make_unique<td::ClientManager>();
     mClientId = mClientManager->create_client_id();
     sendQuery(td::td_api::make_object<td::td_api::getOption>("version"), [](Object object) {
@@ -54,14 +55,17 @@ void App::initClientManager() {
             [](auto&){}
         });
     });
+#endif
 }
 
 void App::sendQuery(td::td_api::object_ptr<td::td_api::Function> f, std::function<void(Object)> handler) {
+#if !CLIENT_DEMO
     auto query_id = ++mCurrentQueryId;
     if (handler) {
         mHandlers.emplace(query_id, std::move(handler));
     }
     mClientManager->send(mClientId, query_id, std::move(f));
+#endif
 }
 
 void App::processResponse(td::ClientManager::Response response) {
@@ -87,6 +91,7 @@ concept CanBeHandledBy = requires(Anything& anything, Handler& t) {
 };
 
 void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
+#if !CLIENT_DEMO
     td::td_api::downcast_call(
             *object, aui::lambda_overloaded{
                     [this](td::td_api::updateAuthorizationState &update_authorization_state) {
@@ -126,7 +131,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                             .id = u.chat_->id_,
                             .title = u.chat_->title_,
                             .previewText = MessageModel::makePreviewText(u.chat_->last_message_.get()),
-                            .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? _new<AImageDrawable>(util::image::from(*u.chat_->photo_->minithumbnail_)) : nullptr,
+                            .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? util::image::from(*u.chat_->photo_->minithumbnail_) : nullptr,
                             .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
                             .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
                             .type = [&] {
@@ -183,9 +188,11 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         msg->setValue(&MessageModel::status, MessageModel::SendStatus::UNREAD);
                     },
                     Stub{}});
+#endif
 }
 
 void App::update() {
+#if !CLIENT_DEMO
     for (;;) {
         auto response = mClientManager->receive(0);
         if (!response.object) {
@@ -193,6 +200,7 @@ void App::update() {
         }
         processResponse(std::move(response));
     }
+#endif
 }
 
 void App::run() {

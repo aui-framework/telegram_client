@@ -35,17 +35,18 @@ using namespace ass;
 
 MainView::MainView(_<App> app) : mApp(std::move(app)) {
     setContents(Vertical {
-//      Horizontal {
-//        _new<AButton>("Logout").connect(&AView::clicked, me::logout),
-//        _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
-//      },
+      //      Horizontal {
+      //        _new<AButton>("Logout").connect(&AView::clicked, me::logout),
+      //        _new<TGIco>(TGIco::CHECKMARK5_CLOCK),
+      //      },
       ASplitter::Horizontal()
           .withItems({
-            _new<ChatListView>(mApp) let {
+            mChatListView =
+                _new<ChatListView>(mApp) let {
                     it with_style { MinSize { 250_dp } };
                     connect(it->chatSelected, me::presentChat);
                 },
-            mChatWrap = Stacked::Expanding {} with_style { MinSize { 500_dp } },
+            mChatWrap = Stacked::Expanding {} with_style { MinSize { 300_dp } },
           })
           .build() with_style {
             LayoutSpacing{1_px},

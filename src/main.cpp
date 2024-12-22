@@ -17,7 +17,16 @@
 #include <AUI/Platform/Entry.h>
 #include "App.h"
 
+#if CLIENT_DEMO
+#include "demo.h"
+#endif
+
 AUI_ENTRY {
-    _new<App>()->run();
+    auto app = _new<App>();
+    app->run();
+
+#if CLIENT_DEMO
+    demo::init(app);
+#endif
     return 0;
 };

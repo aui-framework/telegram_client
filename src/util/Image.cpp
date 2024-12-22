@@ -18,9 +18,26 @@
 // Created by alex2772 on 11/14/24.
 //
 
-#include <AUI/Image/AImageLoaderRegistry.h>
 #include "Image.h"
 
-_<AImage> util::image::from(const td::td_api::minithumbnail& minithumbnail) {
-    return AImage::fromBuffer(AByteBufferView(minithumbnail.data_));
+#include <AUI/Image/AImageLoaderRegistry.h>
+
+_<IDrawable> util::image::from(const td::td_api::minithumbnail& minithumbnail) {
+    class MinithumbnailDrawable : public IDrawable {
+    public:
+        explicit MinithumbnailDrawable(_unique<IDrawable> base) noexcept : mBase(std::move(base)) {}
+        void draw(IRenderer& render, const IDrawable::Params& params) override {
+            mBase-> draw(render, params);
+            auto relation = glm::ivec2(params.size) / mBase->getSizeHint();
+            ass::Backdrop::Any backdrops[] = {
+                ass::Backdrop::GaussianBlurCustom { .radius = 2_dp, .downscale = glm::max(relation.x, relation.y) },
+            };
+            render.backdrops({}, params.size, backdrops);
+        }
+        glm::ivec2 getSizeHint() override { return mBase->getSizeHint(); }
+    private:
+        _unique<IDrawable> mBase;
+    };
+
+    return _new<MinithumbnailDrawable>(std::make_unique<AImageDrawable>(AImage::fromBuffer(AByteBufferView(minithumbnail.data_))));
 }

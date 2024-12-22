@@ -73,7 +73,7 @@ MessageModel::Content MessageModel::makeContent(td::td_api::object_ptr<td::td_ap
                 result.text = u.caption_->text_;
                 auto& size = u.photo_->sizes_.front();
                 result.photo = Content::Photo {
-                    .drawable = _new<AImageDrawable>(util::image::from(*u.photo_->minithumbnail_)),
+                    .drawable = util::image::from(*u.photo_->minithumbnail_),
                     .size = { size->width_, size->height_ },
                 };
             },

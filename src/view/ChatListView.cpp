@@ -30,67 +30,77 @@
 #include <AUI/View/AForEachUI.h>
 #include <AUI/View/AScrollArea.h>
 
-
 #include "SpacerForView.h"
+#include "TGIco.h"
 
 using namespace ass;
 using namespace declarative;
 
 ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
-    _<AViewContainer> contents = Centered::Expanding {};
     setContents(Vertical {
       _new<SpacerForView>(mApp) << ".container_color",
-      contents,
+      mContents = Centered::Expanding {},
     });
     setExtraStylesheet(AStylesheet {
-        {
-            t<ALabel>(),
-        },
-        {
-            t<AScrollArea>(),
-        }
+      {
+        t<ALabel>(),
+      },
+      {
+        t<AScrollArea>(),
+      } });
+
+    mApp->sendQuery(td::td_api::getChats(nullptr, 20), [this](td::td_api::chats& chats) {
+        auto model = AListModel<_<Chat>>::fromVector(
+            chats.chat_ids_ | ranges::view::transform([&](int64_t id) { return mApp->getChat(id); }) |
+            ranges::to_vector);
+
+        setModel(model);
     });
-
-    mApp->sendQuery(td::td_api::getChats(nullptr, 20), [this, contents](td::td_api::chats& chats) {
-        auto model = AListModel<_<Chat>>::fromVector(chats.chat_ids_
-            | ranges::view::transform([&](int64_t id) { return mApp->getChat(id); })
-            | ranges::to_vector);
-
-        ALayoutInflater::inflate(contents, AScrollArea::Builder().withContents(
-            AUI_DECLARATIVE_FOR(chat, model, AVerticalLayout) {
-                return Horizontal {
-                    Centered{
-                        Icon{} with_style{
+}
+void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
+    ALayoutInflater::inflate(
+        mContents,
+        AScrollArea::Builder()
+                .withContents(
+                    AUI_DECLARATIVE_FOR(chat, model, AVerticalLayout) {
+                    return Horizontal {
+                        Centered {
+                          Icon {} with_style {
                             FixedSize(36_dp),
                             BorderRadius{36_dp / 2.f},
                             AOverflow::HIDDEN,
-                        } && chat(&ChatModel::thumbnail),
-                    },
-                    Centered::Expanding {
-                        Vertical::Expanding{
-                            Label{} with_style { ATextOverflow::ELLIPSIS }&& chat(&ChatModel::title),
-                            Horizontal {
-                                Label{} with_style { Expanding(), ATextOverflow::ELLIPSIS } && chat(&ChatModel::previewText),
-                                Label{} with_style {
-                                    MinSize { 16_dp - 4_dp * 2.f, 16_dp },
-                                    FontSize { 8_pt },
-                                    BorderRadius { 16_dp / 2.f },
-                                    Padding { 0, 4_dp },
-                                    ATextAlign::CENTER,
-                                } << ".unread_count" && chat(&ChatModel::unreadCount, AString::number<int>)
-                                                     && chat(&ChatModel::unreadCount, [](int count) {
-                                                         return count > 0 ? Visibility::VISIBLE : Visibility::GONE;
-                                                     }),
-                            },
-                        }
-                    },
-                }.connect(&AView::clicked, this, [this, chat] {
-                    emit chatSelected(chat);
-                }) with_style {
-                    Padding { 5_dp, 6_dp },
-                    Margin { 0 },
-                };
-            }
-        ).build() << ".container_color");
-    });
+                          } && chat(&ChatModel::thumbnail),
+                        },
+                        Centered::Expanding { Vertical::Expanding {
+                          Horizontal {
+                            Label {} with_style { ATextOverflow::ELLIPSIS, Expanding() } && chat(&ChatModel::title),
+                            _new<TGIco>() && chat(&ChatModel::lastSendStatus, MessageModel::sendStatusToIcon),
+                            Label {} with_style { Opacity(0.7f) } && chat(&ChatModel::time),
+                          },
+                          Horizontal {
+                            Label {} with_style {
+                              Expanding(),
+                              ATextOverflow::ELLIPSIS,
+                              Opacity(0.7f),
+                            } && chat(&ChatModel::previewText),
+                            Label {} with_style {
+                              MinSize { 16_dp - 4_dp * 2.f, 16_dp },
+                              FontSize { 8_dp },
+                              BorderRadius { 16_dp / 2.f },
+                              Padding { 0, 4_dp },
+                              ATextAlign::CENTER,
+                            } << ".unread_count" &&
+                                chat(&ChatModel::unreadCount, AString::number<int>) &&
+                                chat(&ChatModel::unreadCount,
+                                     [](int count) { return count > 0 ? Visibility::VISIBLE : Visibility::GONE; }),
+                          },
+                        } },
+                    }
+                        .connect(&AView::clicked, this, [this, chat] { emit chatSelected(chat); }) with_style {
+                            Padding { 5_dp, 6_dp },
+                            Margin { 0 },
+                        };
+                })
+                .build()
+            << ".container_color");
 }

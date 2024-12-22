@@ -16,20 +16,7 @@
 
 #pragma once
 
-
-#include <AUI/View/AViewContainer.h>
 #include "App.h"
-
-class ChatListView: public AViewContainer {
-public:
-    ChatListView(_<App> chat);
-
-    void setModel(const _<AListModel<_<Chat>>>& model);
-
-signals:
-    emits<_<Chat>> chatSelected;
-
-private:
-    _<App> mApp;
-    _<AViewContainer> mContents;
-};
+namespace demo {
+void init(const _<App>& app);
+}

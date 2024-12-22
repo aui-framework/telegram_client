@@ -20,5 +20,5 @@
 #include "App.h"
 
 namespace util::image {
-    _<AImage> from(const td::td_api::minithumbnail& minithumbnail);
+    _<IDrawable> from(const td::td_api::minithumbnail& minithumbnail);
 }
