@@ -88,7 +88,7 @@ void AuthorizationView::handle(td::td_api::authorizationStateWaitCode& state) {
         _new<AButton>("Next") let {
             connect(it->clicked, this, [this, code]() {
                 disable();
-                mApp->sendQuery(td::td_api::checkAuthenticationCode(code->text().toStdString()), [this, self = shared_from_this()](App::Object object) {
+                mApp->sendQuery(td::td_api::checkAuthenticationCode(code->text()->toStdString()), [this, self = shared_from_this()](App::Object object) {
                     enable();
                 });
             });
@@ -114,7 +114,7 @@ void AuthorizationView::handle(td::td_api::authorizationStateWaitPassword& state
             _new<AButton>("Submit") let {
                 connect(it->clicked, this, [this, password]() {
                     disable();
-                    mApp->sendQuery(td::td_api::checkAuthenticationPassword(password->text().toStdString()), [this, self = shared_from_this()](App::Object object) {
+                    mApp->sendQuery(td::td_api::checkAuthenticationPassword(password->text()->toStdString()), [this, self = shared_from_this()](App::Object object) {
                         enable();
                     });
                 });

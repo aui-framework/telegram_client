@@ -276,7 +276,7 @@ void ChatView::send() {
         auto content = td::td_api::make_object<td::td_api::inputMessageText>();
         content->text_ = [&] {
             auto t = td::td_api::make_object<td::td_api::formattedText>();
-            t->text_ = text.toStdString();
+            t->text_ = text->toStdString();
             return t;
         }();
         return content;
