@@ -152,7 +152,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
             [&] {
                 return std::visit(
                     aui::lambda_overloaded {
-                      [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "2 online" }; },
+                      [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "last seen <TODO>" }; },
                       [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
                     },
                     (*mChat)->type);
