@@ -23,7 +23,7 @@
 #include "view/TGIco.h"
 #include "util/Image.h"
 
-AString MessageModel::makePreviewText(td::td_api::message* message) {
+AString Message::makePreviewText(td::td_api::message* message) {
     AString result = "message";
 
     if (message) {
@@ -44,26 +44,26 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
     return result;
 }
 
-void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message) {
-    self.setValue(&MessageModel::content, makeContent(message->content_));
-    self.setValue(&MessageModel::date, std::chrono::system_clock::from_time_t(message->date_));
+void Message::populateFrom(td::td_api::object_ptr<td::td_api::message> message) {
+    content = makeContent(message->content_);
+    date = std::chrono::system_clock::from_time_t(message->date_);
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
         [&](td::td_api::messageSenderUser& u) {
-            self.setValue(&MessageModel::userId, u.user_id_);
+            userId = u.user_id_;
         },
         [](auto&) {},
     });
-    self.setValue(&MessageModel::isOutgoing, message->is_outgoing_);
-    if (self->isOutgoing) {
+    isOutgoing = message->is_outgoing_;
+    if (isOutgoing) {
         if (message->sending_state_ != nullptr) {
-            self.setValue(&MessageModel::status, MessageModel::SendStatus::SENDING);
+            status = Message::SendStatus::SENDING;
         } else {
-            self.setValue(&MessageModel::status, MessageModel::SendStatus::UNREAD);
+            status = Message::SendStatus::UNREAD;
         }
     }
 }
 
-MessageModel::Content MessageModel::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
+Message::Content Message::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
     Content result;
     td::td_api::downcast_call(*content, aui::lambda_overloaded{
             [&](td::td_api::messageText& u) {
@@ -82,7 +82,7 @@ MessageModel::Content MessageModel::makeContent(td::td_api::object_ptr<td::td_ap
     return result;
 }
 
-AString MessageModel::sendStatusToIcon(MessageModel::SendStatus status) {
+AString Message::sendStatusToIcon(Message::SendStatus status) {
     switch (status) {
         case SendStatus::NONE: return "";
         case SendStatus::SENDING:
@@ -94,4 +94,3 @@ AString MessageModel::sendStatusToIcon(MessageModel::SendStatus status) {
     }
     return "";
 }
-

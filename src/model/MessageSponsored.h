@@ -18,10 +18,9 @@
 
 #include "Message.h"
 
-struct MessageSponsoredModel {
+
+struct MessageSponsored {
     int64_t id;
-    MessageModel::Content content;
+    AProperty<Message::Content> content;
     bool isRecommended = false;
 };
-
-using MessageSponsored = ADataBinding<MessageSponsoredModel>;

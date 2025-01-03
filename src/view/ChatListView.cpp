@@ -69,30 +69,34 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                             FixedSize(36_dp),
                             BorderRadius{36_dp / 2.f},
                             AOverflow::HIDDEN,
-                          } && chat(&ChatModel::thumbnail),
+                          } & chat->thumbnail,
                         },
                         Centered::Expanding { Vertical::Expanding {
                           Horizontal {
-                            Label {} with_style { ATextOverflow::ELLIPSIS, Expanding() } && chat(&ChatModel::title),
-                            _new<TGIco>() && chat(&ChatModel::lastSendStatus, MessageModel::sendStatusToIcon),
-                            Label {} with_style { Opacity(0.7f) } && chat(&ChatModel::time),
+                            Label {} with_style { ATextOverflow::ELLIPSIS, Expanding() } && chat->title,
+                            _new<TGIco>() & chat->lastSendStatus.readProjected(Message::sendStatusToIcon),
+                            Label {} with_style { Opacity(0.7f) } && chat->time,
                           },
                           Horizontal {
                             Label {} with_style {
                               Expanding(),
                               ATextOverflow::ELLIPSIS,
                               Opacity(0.7f),
-                            } && chat(&ChatModel::previewText),
-                            Label {} with_style {
-                              MinSize { 16_dp - 4_dp * 2.f, 16_dp },
-                              FontSize { 8_dp },
-                              BorderRadius { 16_dp / 2.f },
-                              Padding { 0, 4_dp },
-                              ATextAlign::CENTER,
-                            } << ".unread_count" &&
-                                chat(&ChatModel::unreadCount, AString::number<int>) &&
-                                chat(&ChatModel::unreadCount,
-                                     [](int count) { return count > 0 ? Visibility::VISIBLE : Visibility::GONE; }),
+                            } && chat->previewText,
+                            Centered {
+                              Label {} with_style {
+                                MinSize { 16_dp - 4_dp * 2.f, 16_dp },
+                                FontSize { 10_dp },
+                                BorderRadius { 16_dp / 2.f },
+                                Padding { 0, 4_dp },
+                                Margin { 0, {} },
+                                ATextAlign::CENTER,
+                              } << ".unread_count" &
+                                  chat->unreadCount.readProjected(AString::number<int>) &
+                                  chat->unreadCount.readProjected([](int count) {
+                                      return count > 0 ? Visibility::VISIBLE : Visibility::GONE;
+                                  }) > &AView::visibility,
+                            },
                           },
                         } },
                     }

@@ -20,11 +20,10 @@
 #include <td/telegram/td_api.h>
 #include <AUI/Image/IDrawable.h>
 
-
-struct MessageModel {
+struct Message {
     int64_t id;
-    int64_t userId = 0;
-    std::chrono::system_clock::time_point date;
+    AProperty<int64_t> userId = 0;
+    AProperty<std::chrono::system_clock::time_point> date;
 
     struct Content {
         AString text;
@@ -33,7 +32,8 @@ struct MessageModel {
             glm::ivec2 size;
         };
         AOptional<Photo> photo;
-    } content;
+    };
+    AProperty<Content> content;
     bool isOutgoing;
 
     enum class SendStatus {
@@ -41,13 +41,12 @@ struct MessageModel {
         SENDING, // shows clock icon
         UNREAD, // server has received the message, shows single checkmark icon
         READ, // someone read the message, shows two checkmarks icon
-    } status = SendStatus::NONE;
+    };
+    AProperty<SendStatus> status = SendStatus::NONE;
 
     static AString sendStatusToIcon(SendStatus status);
 
     static AString makePreviewText(td::td_api::message* message);
-    static void populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message);
+    void populateFrom(td::td_api::object_ptr<td::td_api::message> message);
     static Content makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content);
 };
-
-using Message = ADataBinding<MessageModel>;

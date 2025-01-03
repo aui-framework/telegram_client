@@ -52,3 +52,4 @@ endif()
 
 aui_compile_assets(${PROJECT_NAME})
 aui_enable_tests(${PROJECT_NAME})
+

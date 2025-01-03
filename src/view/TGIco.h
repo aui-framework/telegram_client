@@ -123,8 +123,9 @@ public:
 template<>
 struct ADataBindingDefault<TGIco, AString> {
 public:
-    static void setup(const _<ALabel>& view) {
+    static auto property(const _<ALabel>& view) {
+        return view->text();
     }
 
-    static auto getSetter() { return &ALabel::setText; }
+    static void setup(const _<ALabel>& view) {}
 };

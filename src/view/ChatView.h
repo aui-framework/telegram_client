@@ -34,7 +34,7 @@ private:
     _<AViewContainer> mContentsWrap;
     AVector<int64_t /* message id */> mReadMessagesBatch;
 
-    template<typename MessageModelT = MessageModel>
-    _<AViewContainer> makeMessage(ADataBinding<MessageModelT>& message);
+    template<typename MessageModelT = Message>
+    _<AViewContainer> makeMessage(const _<MessageModelT>& message);
     void send();
 };

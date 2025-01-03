@@ -20,20 +20,20 @@
 #include <range/v3/all.hpp>
 #include "Chat.h"
 
-const _<Message>& ChatModel::getMessageOrNew(int64_t id) const {
-    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
+const _<Message>& Chat::getMessageOrNew(int64_t id) const {
+    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
     if (l != messages.end()) {
-        if ((**l)->id == id) {
+        if ((*l)->id == id) {
             return *l;
         }
     }
-    return *messages->insert(l, _new<Message>(MessageModel{ .id = id }));
+    return *messages->insert(l, aui::ptr::manage(Message{ .id = id }));
 }
 
-_<Message> ChatModel::getMessage(int64_t id) const {
-    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return (*msg)->id; });
+_<Message> Chat::getMessage(int64_t id) const {
+    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
     if (l != messages.end()) {
-        if ((**l)->id == id) {
+        if ((*l)->id == id) {
             return *l;
         }
     }
