@@ -31,6 +31,7 @@
 #include <AUI/View/AScrollArea.h>
 
 #include <model/Chat.h>
+#include <model/Message.h>
 
 #include "SpacerForView.h"
 #include "TGIco.h"
@@ -69,38 +70,53 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                         Centered {
                           Icon {} with_style {
                             FixedSize(36_dp),
-                            BorderRadius{36_dp / 2.f},
+                            BorderRadius { 36_dp / 2.f },
                             AOverflow::HIDDEN,
                           } & chat->thumbnail,
                         },
-                        Centered::Expanding { Vertical::Expanding {
-                          Horizontal {
-                            Label {} with_style { ATextOverflow::ELLIPSIS, Expanding() } && chat->title,
-                            //_new<TGIco>() & chat->lastSendStatus,
-                            Label {} with_style { Opacity(0.7f) } && chat->time,
-                          },
-                          Horizontal {
-                            Label {} with_style {
-                              Expanding(),
-                              ATextOverflow::ELLIPSIS,
-                              Opacity(0.7f),
-                            } && chat->previewText,
-                            Centered {
+                        Centered::Expanding {
+                          Vertical::Expanding {
+                            Horizontal {
+                              Label {} with_style { ATextOverflow::ELLIPSIS, Expanding() } && chat->title,
+                              Centered {} & chat->lastMessage.readProjected([](const _<Message>& msg) -> _<AView> {
+                                  if (msg == nullptr) {
+                                      return nullptr;
+                                  }
+                                  return Horizontal {
+                                      _new<TGIco>() with_style { FontSize(10_pt) } << ".accent_textcolor" &
+                                          msg->statusIcon > &TGIco::setIconHideIfNone,
+                                      Label {} with_style { Opacity(0.6f), Margin(0) } &
+                                          msg->date.readProjected(Message::dateFmt),
+                                  } with_style {
+                                      LayoutSpacing(2_dp),
+                                  };
+                              }),
+                            },
+                            Horizontal {
                               Label {} with_style {
-                                MinSize { 16_dp - 4_dp * 2.f, 16_dp },
-                                FontSize { 10_dp },
-                                BorderRadius { 16_dp / 2.f },
-                                Padding { 0, 4_dp },
-                                Margin { 0, {} },
-                                ATextAlign::CENTER,
-                              } << ".unread_count" &
-                                  chat->unreadCount.readProjected(AString::number<int>) &
-                                  chat->unreadCount.readProjected([](int count) {
-                                      return count > 0 ? Visibility::VISIBLE : Visibility::GONE;
-                                  }) > &AView::visibility,
+                                Expanding(),
+                                ATextOverflow::ELLIPSIS,
+                                Opacity(0.6f),
+                              } && chat->previewText,
+                              Centered {
+                                Label {} with_style {
+                                  MinSize { 16_dp - 4_dp * 2.f, 16_dp },
+                                  FontSize { 10_dp },
+                                  BorderRadius { 16_dp / 2.f },
+                                  Padding { 0, 4_dp },
+                                  Margin { 0 },
+                                  ATextAlign::CENTER,
+                                } << ".unread_count" &
+                                    chat->unreadCount.readProjected(AString::number<int>) &
+                                    chat->unreadCount.readProjected([](int count) {
+                                        return count > 0 ? Visibility::VISIBLE : Visibility::GONE;
+                                    }) > &AView::visibility,
+                              },
+                            } with_style {
+                              LayoutSpacing(2_dp),
                             },
                           },
-                        } },
+                        },
                     }
                         .connect(&AView::clicked, this, [this, chat] { emit chatSelected(chat); }) with_style {
                             Padding { 5_dp, 6_dp },

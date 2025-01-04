@@ -54,14 +54,12 @@ _<AViewContainer> ChatView::makeMessage(const _<MessageModelT>& message) {
                     return {
                         Horizontal {
                           _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 12_dp } } &
-                              message.date.readProjected([](std::chrono::system_clock::time_point time) {
-                                  return "{:%H:%M}"_format(time);
-                              }),
+                              message.date.readProjected(Message::dateShortFmt),
                         } with_style {
                           Opacity { 0.3f },
                         },
                         _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp } }
-                                << ".status" & message.statusIcon > &TGIco::setIconHideIfNone,
+                                << ".status" << ".accent_textcolor" & message.statusIcon > &TGIco::setIconHideIfNone,
                     };
                 }
                 if constexpr (requires { MessageModelT::isRecommended; }) {

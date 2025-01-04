@@ -94,7 +94,7 @@ MainWindow::MainWindow(_<App> app)
         AOverflow::HIDDEN,
       },
       {
-        c(".message") >> c(".status"),
+        c(".accent_textcolor"),
         TextColor { 0x589fd7_rgb },
       },
       {

@@ -33,7 +33,6 @@ struct Chat {
     AProperty<AString> title;
     AProperty<AString> previewText;
     AProperty<_<Message>> lastMessage;
-    AProperty<AString> time;
     AProperty<_<IDrawable>> thumbnail;
     AProperty<int64_t> inboxLastReadMessage;
     AProperty<int64_t> outboxLastReadMessage;

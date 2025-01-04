@@ -23,6 +23,9 @@
 #include "view/TGIco.h"
 #include "util/Image.h"
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
+
 AString Message::makePreviewText(td::td_api::message* message) {
     AString result = "message";
 
@@ -98,4 +101,21 @@ APropertyPrecomputed<TGIco::Icon>::Factory Message::statusIconProperty() {
         }
         return TGIco::UNREAD;
     };
+}
+
+AString Message::dateShortFmt(std::chrono::system_clock::time_point time) {
+    return "{:%H:%M}"_format(time);
+}
+AString Message::dateFmt(std::chrono::system_clock::time_point time) {
+    const auto NOW = system_clock::now();
+    if (NOW - time <= 24h) {
+        return "{:%R}"_format(time); // 12:00, 03:43
+    }
+    if (NOW - time <= days(7)) {
+        return "{:%a}"_format(time); // Fri, Wed
+    }
+    if (std::chrono::floor<years>(NOW) != std::chrono::floor<years>(time)) {
+        return "{:%D}"_format(time); // 12/30/2024
+    }
+    return "{:%m/%d}"_format(time); // 12/30
 }

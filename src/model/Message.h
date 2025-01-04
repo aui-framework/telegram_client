@@ -48,6 +48,10 @@ struct Message {
     void populateFrom(td::td_api::object_ptr<td::td_api::message> message);
     static Content makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content);
 
+    static AString dateShortFmt(std::chrono::system_clock::time_point time);;
+
+    static AString dateFmt(std::chrono::system_clock::time_point time);;
+
 private:
     APropertyPrecomputed<TGIco::Icon>::Factory statusIconProperty();
 };

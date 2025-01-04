@@ -22,7 +22,7 @@
 #include "model/Chat.h"
 
 TEST(ChatModel, Insert) {
-    auto chat = aui::ptr::manage(Chat{});
+    auto chat = aui::ptr::manage(new Chat{});
     auto msg1 = (*chat)->getMessageOrNew(1);
     (*chat)->getMessageOrNew(0);
     (*chat)->getMessageOrNew(2);
