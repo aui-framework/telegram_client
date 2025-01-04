@@ -30,6 +30,8 @@
 #include <AUI/View/AForEachUI.h>
 #include <AUI/View/AScrollArea.h>
 
+#include <model/Chat.h>
+
 #include "SpacerForView.h"
 #include "TGIco.h"
 
@@ -74,7 +76,7 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                         Centered::Expanding { Vertical::Expanding {
                           Horizontal {
                             Label {} with_style { ATextOverflow::ELLIPSIS, Expanding() } && chat->title,
-                            _new<TGIco>() & chat->lastSendStatus.readProjected(Message::sendStatusToIcon),
+                            //_new<TGIco>() & chat->lastSendStatus,
                             Label {} with_style { Opacity(0.7f) } && chat->time,
                           },
                           Horizontal {

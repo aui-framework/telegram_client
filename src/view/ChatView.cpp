@@ -33,6 +33,7 @@
 
 #include "SpacerForView.h"
 #include "TGIco.h"
+#include <model/MessageSponsored.h>
 
 using namespace ass;
 using namespace declarative;
@@ -60,8 +61,7 @@ _<AViewContainer> ChatView::makeMessage(const _<MessageModelT>& message) {
                           Opacity { 0.3f },
                         },
                         _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp } }
-                                << ".status" &
-                            message.status.readProjected(MessageModelT::sendStatusToIcon),
+                                << ".status" & message.statusIcon > &TGIco::setIconHideIfNone,
                     };
                 }
                 if constexpr (requires { MessageModelT::isRecommended; }) {
@@ -254,7 +254,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                 td::td_api::getChatSponsoredMessages(mChat->id), [&](td::td_api::sponsoredMessages& messages) {
                     mChat->sponsoredMessages->clear();
                     for (auto& msg : messages.messages_) {
-                        mChat->sponsoredMessages << aui::ptr::manage(MessageSponsored {
+                        mChat->sponsoredMessages << aui::ptr::manage(new MessageSponsored {
                           .id = msg->message_id_,
                           .content = Message::makeContent(msg->content_),
                           .isRecommended = msg->is_recommended_,
@@ -266,7 +266,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 }
 
 void ChatView::send() {
-    auto text = mInput->text();
+    auto text = *mInput->text();
     mInput->setText("");
     auto msg = td::td_api::make_object<td::td_api::sendMessage>();
     msg->chat_id_ = mChat->id;
@@ -274,7 +274,7 @@ void ChatView::send() {
         auto content = td::td_api::make_object<td::td_api::inputMessageText>();
         content->text_ = [&] {
             auto t = td::td_api::make_object<td::td_api::formattedText>();
-            t->text_ = text->toStdString();
+            t->text_ = text.toStdString();
             return t;
         }();
         return content;

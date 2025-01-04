@@ -20,15 +20,19 @@
 #include <AUI/Common/AMap.h>
 #include <AUI/Image/IDrawable.h>
 #include <AUI/Model/AListModel.h>
-#include "Message.h"
-#include "MessageSponsored.h"
+#include "MessageSendingState.h"
+
+class App;
+struct Message;
+struct MessageSponsored;
 
 struct Chat {
+    _weak<App> app;
+    _weak<Chat> self;
     int64_t id;
     AProperty<AString> title;
     AProperty<AString> previewText;
     AProperty<_<Message>> lastMessage;
-    AProperty<Message::SendStatus> lastSendStatus;
     AProperty<AString> time;
     AProperty<_<IDrawable>> thumbnail;
     AProperty<int64_t> inboxLastReadMessage;

@@ -19,9 +19,14 @@
 #include <AUI/Util/ADataBinding.h>
 #include <td/telegram/td_api.h>
 #include <AUI/Image/IDrawable.h>
+#include "MessageSendingState.h"
+#include "Chat.h"
+#include "view/TGIco.h"
 
 struct Message {
+    _weak<Chat> chat;
     int64_t id;
+    int64_t chatId{};
     AProperty<int64_t> userId = 0;
     AProperty<std::chrono::system_clock::time_point> date;
 
@@ -34,19 +39,15 @@ struct Message {
         AOptional<Photo> photo;
     };
     AProperty<Content> content;
-    bool isOutgoing;
+    bool isOutgoing{};
 
-    enum class SendStatus {
-        NONE, // typically incoming message
-        SENDING, // shows clock icon
-        UNREAD, // server has received the message, shows single checkmark icon
-        READ, // someone read the message, shows two checkmarks icon
-    };
-    AProperty<SendStatus> status = SendStatus::NONE;
-
-    static AString sendStatusToIcon(SendStatus status);
+    AProperty<MessageSendingState> sendingState;
+    APropertyPrecomputed<TGIco::Icon> statusIcon = statusIconProperty();
 
     static AString makePreviewText(td::td_api::message* message);
     void populateFrom(td::td_api::object_ptr<td::td_api::message> message);
     static Content makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content);
+
+private:
+    APropertyPrecomputed<TGIco::Icon>::Factory statusIconProperty();
 };

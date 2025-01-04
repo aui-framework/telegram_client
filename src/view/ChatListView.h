@@ -19,6 +19,7 @@
 
 #include <AUI/View/AViewContainer.h>
 #include "App.h"
+#include <AUI/Model/AListModel.h>
 
 class ChatListView: public AViewContainer {
 public:

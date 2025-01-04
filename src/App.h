@@ -23,7 +23,8 @@
 #include <AUI/Common/AMap.h>
 #include <AUI/Common/ATimer.h>
 #include "MainWindow.h"
-#include "model/Chat.h"
+
+struct Chat;
 
 class App: public AObject {
 public:

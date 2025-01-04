@@ -45,6 +45,7 @@ AString Message::makePreviewText(td::td_api::message* message) {
 }
 
 void Message::populateFrom(td::td_api::object_ptr<td::td_api::message> message) {
+    chatId = message->chat_id_;
     content = makeContent(message->content_);
     date = std::chrono::system_clock::from_time_t(message->date_);
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
@@ -54,13 +55,7 @@ void Message::populateFrom(td::td_api::object_ptr<td::td_api::message> message) 
         [](auto&) {},
     });
     isOutgoing = message->is_outgoing_;
-    if (isOutgoing) {
-        if (message->sending_state_ != nullptr) {
-            status = Message::SendStatus::SENDING;
-        } else {
-            status = Message::SendStatus::UNREAD;
-        }
-    }
+    sendingState = MessageSendingState::make(message->sending_state_);
 }
 
 Message::Content Message::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
@@ -82,15 +77,25 @@ Message::Content Message::makeContent(td::td_api::object_ptr<td::td_api::Message
     return result;
 }
 
-AString Message::sendStatusToIcon(Message::SendStatus status) {
-    switch (status) {
-        case SendStatus::NONE: return "";
-        case SendStatus::SENDING:
+APropertyPrecomputed<TGIco::Icon>::Factory Message::statusIconProperty() {
+    return [&] {
+        if (std::holds_alternative<MessageSendingState::Pending>(sendingState->value)) {
             return TGIco::CHECKMARK5_CLOCK;
-        case SendStatus::UNREAD:
-            return TGIco::UNREAD;
-        case SendStatus::READ:
+        }
+        auto chat = this->chat.lock();
+        if (!chat) {
+            return TGIco::XYI_ZNAET;
+        }
+        auto app = chat->app.lock();
+        if (!app) {
+            return TGIco::XYI_ZNAET;
+        }
+        if (app->myId() != userId) {
+            return TGIco::NONE;
+        }
+        if (chat->outboxLastReadMessage >= id) {
             return TGIco::READ;
-    }
-    return "";
+        }
+        return TGIco::UNREAD;
+    };
 }

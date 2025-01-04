@@ -19,6 +19,7 @@
 //
 #include <range/v3/all.hpp>
 #include "Chat.h"
+#include "Message.h"
 
 const _<Message>& Chat::getMessageOrNew(int64_t id) const {
     auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
@@ -27,7 +28,7 @@ const _<Message>& Chat::getMessageOrNew(int64_t id) const {
             return *l;
         }
     }
-    return *messages->insert(l, aui::ptr::manage(Message{ .id = id }));
+    return *messages->insert(l, aui::ptr::manage(new Message{ .chat = self, .id = id }));
 }
 
 _<Message> Chat::getMessage(int64_t id) const {

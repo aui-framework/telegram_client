@@ -18,12 +18,16 @@
 // Created by alex2772 on 11/13/24.
 //
 
+#include "App.h"
+
 #include <AUI/Logging/ALogger.h>
 #include <AUI/Util/kAUI.h>
+
+#include <model/Chat.h>
+#include <model/Message.h>
 #include <view/MainView.h>
-#include "App.h"
-#include "view/AuthorizationView.h"
-#include "util/Image.h"
+#include <view/AuthorizationView.h>
+#include <util/Image.h>
 
 static constexpr auto LOG_TAG = "App";
 
@@ -128,6 +132,8 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                     [this](td::td_api::updateNewChat& u) {
                         auto& chat = getChat(u.chat_->id_);
                         *chat = {
+                            .app = sharedPtr(),
+                            .self = chat,
                             .id = u.chat_->id_,
                             .title = u.chat_->title_,
                             .previewText = Message::makePreviewText(u.chat_->last_message_.get()),
@@ -158,6 +164,9 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         getChat(u.chat_id_)->inboxLastReadMessage = u.last_read_inbox_message_id_;
                         getChat(u.chat_id_)->unreadCount = u.unread_count_;
                     },
+                    [this](td::td_api::updateChatReadOutbox& u) {
+                        getChat(u.chat_id_)->outboxLastReadMessage = u.last_read_outbox_message_id_;
+                    },
                     [this](td::td_api::updateChatLastMessage& u) {
                         auto& chat = getChat(u.chat_id_);
                         chat->previewText = Message::makePreviewText(u.last_message_.get());
@@ -185,7 +194,6 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         }
                         msg->id = u.message_->id_;
                         msg->populateFrom(std::move(u.message_));
-                        msg->status = Message::SendStatus::UNREAD;
                     },
                     Stub{}});
 #endif
@@ -211,7 +219,7 @@ void App::run() {
 
 const _<Chat>& App::getChat(int64_t id) {
     return mChats.getOrInsert(id, [&] {
-        return aui::ptr::manage(Chat { .id = id });
+        return aui::ptr::manage(new Chat { .id = id });
     });
 }
 
