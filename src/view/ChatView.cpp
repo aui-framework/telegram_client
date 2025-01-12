@@ -98,11 +98,8 @@ _<AViewContainer> ChatView::makeMessage(const _<MessageModelT>& message) {
             }
             auto rectScrollArea =
                 ARect<int>::fromTopLeftPositionAndSize(mScrollArea->getPositionInWindow(), mScrollArea->getSize());
-            auto rectMessage =
-                ARect<int>::fromTopLeftPositionAndSize(messageView->getPositionInWindow(), messageView->getSize());
-            if (ranges::all_of(rectMessage.vertices(), [&](auto point) {
-                    return rectScrollArea.isIntersects(point);
-                })) {
+            auto rectMessage = messageView->getPositionInWindow() + messageView->getSize();
+            if (rectScrollArea.isIntersects(rectMessage)) {
                 mChat->inboxLastReadMessage = glm::max(*mChat->inboxLastReadMessage, messageId);
                 mReadMessagesBatch << messageId;
                 AObject::disconnect();
