@@ -33,65 +33,62 @@
 
 #include "SpacerForView.h"
 #include "TGIco.h"
+#include <model/MessageSponsored.h>
 
 using namespace ass;
 using namespace declarative;
 
 template <typename MessageModelT>
-_<AViewContainer> ChatView::makeMessage(ADataBinding<MessageModelT>& message) {
+_<AViewContainer> ChatView::makeMessage(const _<MessageModelT>& message) {
     auto text = AText::fromString("") with_style {
         MaxSize { 400_dp, {} },
         Expanding(0, 0),
         Padding { 7_dp, 9_dp, 4_dp },
         Margin { 0 },
-    } && message(&MessageModelT::content, [&message](AText& view, const MessageModel::Content& data) {
-                    view.setItems({
-                      data.text,
-                      Horizontal {
-                        [&]() -> aui::ui_building::ViewGroup {
-                            if constexpr (requires { MessageModelT::date; }) {
-                                return {
-                                    Horizontal {
-                                      _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 12_dp } } &&
-                                      message(&MessageModelT::date,
-                                              [](std::chrono::system_clock::time_point time) {
-                                                  return "{:%H:%M}"_format(time);
-                                              }) } with_style {
-                                      Opacity { 0.3f },
-                                    },
-                                    _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp } }
-                                            << ".statu"
-                                               "s" &&
-                                        message(&MessageModelT::status, MessageModelT::sendStatusToIcon),
-                                };
-                            }
-                            if constexpr (requires { MessageModelT::isRecommended; }) {
-                                return { _new<ALabel>(message->isRecommended ? "recommended" : "sponsored") with_style {
-                                  Margin { 0 }, Padding { 0 }, FontSize { 12_dp }, Opacity { 0.3f } } };
-                            }
-                            return {};
-                        }(),
-                      } with_style {
-                        Margin { 3_dp, {}, -2_dp, 4_dp },
-                        AFloat::RIGHT,
-                      },
-                    });
-                });
+    } & message->content > [&message = *message](AText& view, const Message::Content& data) {
+        view.setItems({
+          data.text,
+          Horizontal {
+            [&]() -> aui::ui_building::ViewGroup {
+                if constexpr (requires { MessageModelT::date; }) {
+                    return {
+                        Horizontal {
+                          _new<ALabel>() with_style { Margin { 0 }, Padding { 0 }, FontSize { 12_dp } } &
+                              message.date.readProjected(Message::dateShortFmt),
+                        } with_style {
+                          Opacity { 0.3f },
+                        },
+                        _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp } }
+                                << ".status" << ".accent_textcolor" & message.statusIcon > &TGIco::setIconHideIfNone,
+                    };
+                }
+                if constexpr (requires { MessageModelT::isRecommended; }) {
+                    return { _new<ALabel>(message.isRecommended ? "recommended" : "sponsored") with_style {
+                      Margin { 0 }, Padding { 0 }, FontSize { 12_dp }, Opacity { 0.3f } } };
+                }
+                return {};
+            }(),
+          } with_style {
+            Margin { 3_dp, {}, -2_dp, 4_dp },
+            AFloat::RIGHT,
+          },
+        });
+    };
     _<AViewContainer> view = Vertical {
         text,
     } << ".message";
-    if (message->content.photo) {
+    if (message->content->photo) {
         view->addView(
             0,
-            _new<ADrawableView>(message->content.photo->drawable) with_style {
-              MinSize(AMetric(message->content.photo->size.x, AMetric::T_DP),
-                      AMetric(message->content.photo->size.y, AMetric::T_DP)),
+            _new<ADrawableView>(message->content->photo->drawable) with_style {
+              MinSize(AMetric(message->content->photo->size.x, AMetric::T_DP),
+                      AMetric(message->content->photo->size.y, AMetric::T_DP)),
               Expanding(1, 1),
             });
         view << ".message_has_photo";
     }
 
-    if ((*mChat)->inboxLastReadMessage < message->id) {
+    if (mChat->inboxLastReadMessage < message->id) {
         // let's track visibility of this message in order to update read status.
         connect(mScrollArea->scrolled, [this, messageViewWeak = view->weakPtr(), messageId = message->id] {
             auto messageView = messageViewWeak.lock();
@@ -101,12 +98,9 @@ _<AViewContainer> ChatView::makeMessage(ADataBinding<MessageModelT>& message) {
             }
             auto rectScrollArea =
                 ARect<int>::fromTopLeftPositionAndSize(mScrollArea->getPositionInWindow(), mScrollArea->getSize());
-            auto rectMessage =
-                ARect<int>::fromTopLeftPositionAndSize(messageView->getPositionInWindow(), messageView->getSize());
-            if (ranges::all_of(rectMessage.vertices(), [&](auto point) {
-                    return rectScrollArea.isIntersects(point);
-                })) {
-                mChat->setValue(&ChatModel::inboxLastReadMessage, glm::max((*mChat)->inboxLastReadMessage, messageId));
+            auto rectMessage = messageView->getPositionInWindow() + messageView->getSize();
+            if (rectScrollArea.isIntersects(rectMessage)) {
+                mChat->inboxLastReadMessage = glm::max(*mChat->inboxLastReadMessage, messageId);
                 mReadMessagesBatch << messageId;
                 AObject::disconnect();
                 ui_thread {
@@ -115,7 +109,7 @@ _<AViewContainer> ChatView::makeMessage(ADataBinding<MessageModelT>& message) {
                         return;
                     }
                     td::td_api::viewMessages viewMessages;
-                    viewMessages.chat_id_ = (*mChat)->id;
+                    viewMessages.chat_id_ = mChat->id;
                     viewMessages.message_ids_ = std::move(messagesToMarkViewed);
                     mApp->sendQuery(std::move(viewMessages));
                 };
@@ -133,7 +127,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 
     {
         td::td_api::openChat query;
-        query.chat_id_ = (*mChat)->id;
+        query.chat_id_ = mChat->id;
         mApp->sendQuery(std::move(query));
     }
 
@@ -145,17 +139,17 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
               FixedSize(32_dp),
               BorderRadius(16_dp),
               AOverflow::HIDDEN,
-            } && mChat(&ChatModel::thumbnail),
+            } & mChat->thumbnail,
           },
           Vertical::Expanding {
-            Label {} && mChat(&ChatModel::title),
+            Label {} & mChat->title,
             [&] {
                 return std::visit(
                     aui::lambda_overloaded {
-                      [](const ChatModel::TypeUserRegular& regular) -> _<AView> { return Label { "last seen <TODO>" }; },
-                      [](const ChatModel::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
+                      [](const Chat::TypeUserRegular& regular) -> _<AView> { return Label { "last seen <TODO>" }; },
+                      [](const Chat::TypeSupergroup& supergroup) -> _<AView> { return Label { "Supergroup" }; },
                     },
-                    (*mChat)->type);
+                    *mChat->type);
             }(),
           },
         } with_style {
@@ -204,21 +198,20 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
     ALayoutInflater::inflate(
         mContentsWrap,
         Vertical {
-          AUI_DECLARATIVE_FOR(message, (*mChat)->messages, AVerticalLayout) {
-              auto view = makeMessage(*message);
+          AUI_DECLARATIVE_FOR(message, mChat->messages, AVerticalLayout) {
+              auto view = makeMessage(message);
 
               // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
-              message->addObserverNoInitialCall(
-                  &MessageModel::userId, [&chat = *mChat, msgId = (*message)->id](int64_t userId) {
-                      auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) {
-                          return (*msg)->id;
-                      });
-                      if (it != chat->messages.end()) {
-                          chat->messages->invalidate(it);
-                      }
+              connect(message->userId.changed, [chat = mChat, msgId = message->id](int64_t userId) {
+                  auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) {
+                      return msg->id;
                   });
+                  if (it != chat->messages.end()) {
+                      chat->messages->invalidate(it);
+                  }
+              });
 
-              const bool mine = (*message)->userId == mApp->myId();
+              const bool mine = message->userId == mApp->myId();
               if (mine) {
                   view << ".message_mine";
                   return Horizontal {
@@ -230,8 +223,8 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                   view,
               };
           },
-          AUI_DECLARATIVE_FOR(message, (*mChat)->sponsoredMessages, AVerticalLayout) {
-              auto view = makeMessage(*message);
+          AUI_DECLARATIVE_FOR(message, mChat->sponsoredMessages, AVerticalLayout) {
+              auto view = makeMessage(message);
               return Horizontal {
                   view,
               };
@@ -240,25 +233,25 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 
     mApp->sendQuery(
         td::td_api::getChatHistory(
-            (*mChat)->id, (*mChat)->lastMessage ? (*(*mChat)->lastMessage)->id : 0, 0, 99, false),
+            mChat->id, mChat->lastMessage.value() ? mChat->lastMessage.value()->id : 0, 0, 99, false),
         [this](td::td_api::messages& messages) {
             for (auto& message : messages.messages_) {
-                auto msg = (*mChat)->getMessageOrNew(message->id_);
-                MessageModel::populateFrom(*msg, std::move(message));
+                auto msg = mChat->getMessageOrNew(message->id_);
+                msg->populateFrom(std::move(message));
             }
 
         });
 
 
-    if (auto superGroup = std::get_if<ChatModel::TypeSupergroup>(&(*mChat)->type)) {
+    if (auto superGroup = std::get_if<Chat::TypeSupergroup>(&*mChat->type)) {
         if (superGroup->isChannel) {
             mApp->sendQuery(
-                td::td_api::getChatSponsoredMessages((*mChat)->id), [&](td::td_api::sponsoredMessages& messages) {
-                    (*mChat)->sponsoredMessages->clear();
+                td::td_api::getChatSponsoredMessages(mChat->id), [&](td::td_api::sponsoredMessages& messages) {
+                    mChat->sponsoredMessages->clear();
                     for (auto& msg : messages.messages_) {
-                        (*mChat)->sponsoredMessages << _new<MessageSponsored>(MessageSponsoredModel {
+                        mChat->sponsoredMessages << aui::ptr::manage(new MessageSponsored {
                           .id = msg->message_id_,
-                          .content = MessageModel::makeContent(msg->content_),
+                          .content = Message::makeContent(msg->content_),
                           .isRecommended = msg->is_recommended_,
                         });
                     }
@@ -268,10 +261,10 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
 }
 
 void ChatView::send() {
-    auto text = mInput->text();
+    auto text = *mInput->text();
     mInput->setText("");
     auto msg = td::td_api::make_object<td::td_api::sendMessage>();
-    msg->chat_id_ = (*mChat)->id;
+    msg->chat_id_ = mChat->id;
     msg->input_message_content_ = [&] {
         auto content = td::td_api::make_object<td::td_api::inputMessageText>();
         content->text_ = [&] {
@@ -286,6 +279,6 @@ void ChatView::send() {
 
 ChatView::~ChatView() {
     td::td_api::closeChat query;
-    query.chat_id_ = (*mChat)->id;
+    query.chat_id_ = mChat->id;
     mApp->sendQuery(std::move(query));
 }

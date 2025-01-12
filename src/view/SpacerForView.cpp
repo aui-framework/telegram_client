@@ -21,5 +21,5 @@
 #include "SpacerForView.h"
 
 SpacerForView::SpacerForView(const _<AView>& view) {
-    connect(view->sizeChanged, [&](glm::ivec2 s) { setFixedSize({ 0, s.y }); });
+    connect(view->size(), [&](glm::ivec2 s) { setFixedSize({ 0, s.y }); });
 }

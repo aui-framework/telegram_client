@@ -20,28 +20,34 @@
 #include <AUI/Common/AMap.h>
 #include <AUI/Image/IDrawable.h>
 #include <AUI/Model/AListModel.h>
-#include "Message.h"
-#include "MessageSponsored.h"
+#include "MessageSendingState.h"
 
-struct ChatModel {
+class App;
+struct Message;
+struct MessageSponsored;
+
+struct Chat {
+    _weak<App> app;
+    _weak<Chat> self;
     int64_t id;
-    AString title;
-    AString previewText;
-    _<Message> lastMessage;
-    MessageModel::SendStatus lastSendStatus;
-    AString time;
-    _<IDrawable> thumbnail;
-    int64_t inboxLastReadMessage;
-    int64_t outboxLastReadMessage;
+    AProperty<AString> title;
+    AProperty<AString> previewText;
+    AProperty<_<Message>> lastMessage;
+    AProperty<_<IDrawable>> thumbnail;
+    AProperty<int64_t> inboxLastReadMessage;
+    AProperty<int64_t> outboxLastReadMessage;
 
-    struct TypeUserRegular {};
+    struct TypeUserRegular {
+        bool operator==(const TypeUserRegular&) const = default;
+    };
     struct TypeSupergroup {
         int64_t supergroupId;
         bool isChannel;
+        bool operator==(const TypeSupergroup&) const = default;
     };
     using Type = std::variant<TypeUserRegular, TypeSupergroup>;
-    Type type;
-    int unreadCount;
+    AProperty<Type> type;
+    AProperty<int> unreadCount;
 
     _<AListModel<_<Message>>> messages = _new<AListModel<_<Message>>>();
     _<AListModel<_<MessageSponsored>>> sponsoredMessages = _new<AListModel<_<MessageSponsored>>>();
@@ -49,5 +55,3 @@ struct ChatModel {
     const _<Message>& getMessageOrNew(int64_t id) const;
     _<Message> getMessage(int64_t id) const;
 };
-
-using Chat = ADataBinding<ChatModel>;

@@ -18,12 +18,16 @@
 // Created by alex2772 on 11/13/24.
 //
 
+#include "App.h"
+
 #include <AUI/Logging/ALogger.h>
 #include <AUI/Util/kAUI.h>
+
+#include <model/Chat.h>
+#include <model/Message.h>
 #include <view/MainView.h>
-#include "App.h"
-#include "view/AuthorizationView.h"
-#include "util/Image.h"
+#include <view/AuthorizationView.h>
+#include <util/Image.h>
 
 static constexpr auto LOG_TAG = "App";
 
@@ -127,44 +131,49 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                     },
                     [this](td::td_api::updateNewChat& u) {
                         auto& chat = getChat(u.chat_->id_);
-                        chat->setModel({
+                        *chat = {
+                            .app = sharedPtr(),
+                            .self = chat,
                             .id = u.chat_->id_,
                             .title = u.chat_->title_,
-                            .previewText = MessageModel::makePreviewText(u.chat_->last_message_.get()),
+                            .previewText = Message::makePreviewText(u.chat_->last_message_.get()),
                             .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? util::image::from(*u.chat_->photo_->minithumbnail_) : nullptr,
                             .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
                             .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
                             .type = [&] {
-                                ChatModel::Type result;
+                                Chat::Type result;
                                 td::td_api::downcast_call(*u.chat_->type_, aui::lambda_overloaded{
-                                    [&](td::td_api::userTypeRegular&) { result = ChatModel::TypeUserRegular{}; },
-                                    [&](td::td_api::chatTypeSupergroup& i) { result = ChatModel::TypeSupergroup{ .supergroupId = i.supergroup_id_, .isChannel = i.is_channel_ }; },
+                                    [&](td::td_api::userTypeRegular&) { result = Chat::TypeUserRegular{}; },
+                                    [&](td::td_api::chatTypeSupergroup& i) { result = Chat::TypeSupergroup{ .supergroupId = i.supergroup_id_, .isChannel = i.is_channel_ }; },
                                     Stub{},
                                 });
                                 return result;
                             }(),
                             .unreadCount = u.chat_->unread_count_,
-                        });
+                        };
                         if (u.chat_->last_message_) {
-                            auto lastMessage = (*chat)->getMessageOrNew(u.chat_->last_message_->id_);
-                            MessageModel::populateFrom(*lastMessage, std::move(u.chat_->last_message_));
-                            chat->getEditableModel().lastMessage = std::move(lastMessage);
+                            auto lastMessage = chat->getMessageOrNew(u.chat_->last_message_->id_);
+                            lastMessage->populateFrom(std::move(u.chat_->last_message_));
+                            chat->lastMessage = std::move(lastMessage);
                         }
                     },
                     [this](td::td_api::updateChatTitle& u) {
-                        getChat(u.chat_id_)->setValue(&ChatModel::title, u.title_);
+                       getChat(u.chat_id_)->title = u.title_;
                     },
                     [this](td::td_api::updateChatReadInbox& u) {
-                        getChat(u.chat_id_)->setValue(&ChatModel::inboxLastReadMessage, u.last_read_inbox_message_id_);
-                        getChat(u.chat_id_)->setValue(&ChatModel::unreadCount, u.unread_count_);
+                        getChat(u.chat_id_)->inboxLastReadMessage = u.last_read_inbox_message_id_;
+                        getChat(u.chat_id_)->unreadCount = u.unread_count_;
+                    },
+                    [this](td::td_api::updateChatReadOutbox& u) {
+                        getChat(u.chat_id_)->outboxLastReadMessage = u.last_read_outbox_message_id_;
                     },
                     [this](td::td_api::updateChatLastMessage& u) {
                         auto& chat = getChat(u.chat_id_);
-                        chat->setValue(&ChatModel::previewText, MessageModel::makePreviewText(u.last_message_.get()));
+                        chat->previewText = Message::makePreviewText(u.last_message_.get());
                         if (u.last_message_) {
-                            auto lastMessage = (*chat)->getMessageOrNew(u.last_message_->id_);
-                            MessageModel::populateFrom(*lastMessage, std::move(u.last_message_));
-                            chat->setValue(&ChatModel::lastMessage, std::move(lastMessage));
+                            auto lastMessage = chat->getMessageOrNew(u.last_message_->id_);
+                            lastMessage->populateFrom(std::move(u.last_message_));
+                            chat->lastMessage = std::move(lastMessage);
                         }
                     },
                     [this](td::td_api::updateUser &update_user) {
@@ -175,17 +184,16 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         }
                     },
                     [this](td::td_api::updateNewMessage& u) {
-                        auto msg = (*getChat(u.message_->chat_id_))->getMessageOrNew(u.message_->id_);
-                        MessageModel::populateFrom(*msg, std::move(u.message_));
+                        auto msg = getChat(u.message_->chat_id_)->getMessageOrNew(u.message_->id_);
+                        msg->populateFrom(std::move(u.message_));
                     },
                     [this](td::td_api::updateMessageSendSucceeded& u) {
-                        auto msg = (*getChat(u.message_->chat_id_))->getMessage(u.old_message_id_);
+                        auto msg = getChat(u.message_->chat_id_)->getMessage(u.old_message_id_);
                         if (!msg) {
                             return;
                         }
-                        msg->getEditableModel().id = u.message_->id_;
-                        MessageModel::populateFrom(*msg, std::move(u.message_));
-                        msg->setValue(&MessageModel::status, MessageModel::SendStatus::UNREAD);
+                        msg->id = u.message_->id_;
+                        msg->populateFrom(std::move(u.message_));
                     },
                     Stub{}});
 #endif
@@ -211,7 +219,7 @@ void App::run() {
 
 const _<Chat>& App::getChat(int64_t id) {
     return mChats.getOrInsert(id, [&] {
-        return _new<Chat>(ChatModel { .id = id });
+        return aui::ptr::manage(new Chat { .id = id });
     });
 }
 

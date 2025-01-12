@@ -1,5 +1,5 @@
 // AUI Telegram Client - example of using AUI Framework
-// Copyright (C) 2024 Alex2772 and Contributors
+// Copyright (C) 2025 Alex2772 and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,26 +16,18 @@
 
 #pragma once
 
+#include <variant>
+#include <td/telegram/Client.h>
+#include <td/telegram/td_api.h>
+#include <td/telegram/td_api.hpp>
 
-#include <AUI/View/AViewContainer.h>
-#include <AUI/View/ATextArea.h>
-#include "App.h"
-#include <model/Message.h>
+struct MessageSendingState {
+    struct None {};
+    struct Pending {};
+    struct Failed {};
+    using Value = std::variant<None, Pending, Failed>;
 
-class ChatView: public AViewContainer {
-public:
-    ChatView(_<App> app, _<Chat> chat);
-    ~ChatView() override;
+    Value value = None{};
 
-private:
-    _<App> mApp;
-    _<Chat> mChat;
-    _<AScrollArea> mScrollArea;
-    _<ATextArea> mInput;
-    _<AViewContainer> mContentsWrap;
-    AVector<int64_t /* message id */> mReadMessagesBatch;
-
-    template<typename MessageModelT = Message>
-    _<AViewContainer> makeMessage(const _<MessageModelT>& message);
-    void send();
+    static MessageSendingState make(const td::td_api::object_ptr<td::td_api::MessageSendingState>& sendingState);
 };

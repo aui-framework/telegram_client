@@ -18,7 +18,6 @@
 
 
 #include <AUI/View/ALabel.h>
-#include "model/Message.h"
 
 class TGIco: public ALabel {
 public:
@@ -26,6 +25,7 @@ public:
      * @brief Open assets/tgico.ttf in font editor like fontforge
      */
     enum Icon {
+        NONE = 0,
         UNREAD = 0xe900,
         READ,
         MOBILE_DESKTOP,
@@ -118,13 +118,22 @@ public:
     };
     using ALabel::ALabel;
     ~TGIco() override = default;
+
+    void setIconHideIfNone(TGIco::Icon icon) {
+        if (icon == NONE) {
+            setVisibility(Visibility::GONE);
+            return;
+        }
+        setText({ char16_t(icon) });
+    }
 };
 
 template<>
 struct ADataBindingDefault<TGIco, AString> {
 public:
-    static void setup(const _<ALabel>& view) {
+    static auto property(const _<ALabel>& view) {
+        return view->text();
     }
 
-    static auto getSetter() { return &ALabel::setText; }
+    static void setup(const _<ALabel>& view) {}
 };

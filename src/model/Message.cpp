@@ -23,7 +23,10 @@
 #include "view/TGIco.h"
 #include "util/Image.h"
 
-AString MessageModel::makePreviewText(td::td_api::message* message) {
+using namespace std::chrono;
+using namespace std::chrono_literals;
+
+AString Message::makePreviewText(td::td_api::message* message) {
     AString result = "message";
 
     if (message) {
@@ -44,26 +47,21 @@ AString MessageModel::makePreviewText(td::td_api::message* message) {
     return result;
 }
 
-void MessageModel::populateFrom(ADataBinding<MessageModel>& self, td::td_api::object_ptr<td::td_api::message> message) {
-    self.setValue(&MessageModel::content, makeContent(message->content_));
-    self.setValue(&MessageModel::date, std::chrono::system_clock::from_time_t(message->date_));
+void Message::populateFrom(td::td_api::object_ptr<td::td_api::message> message) {
+    chatId = message->chat_id_;
+    content = makeContent(message->content_);
+    date = std::chrono::system_clock::from_time_t(message->date_);
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
         [&](td::td_api::messageSenderUser& u) {
-            self.setValue(&MessageModel::userId, u.user_id_);
+            userId = u.user_id_;
         },
         [](auto&) {},
     });
-    self.setValue(&MessageModel::isOutgoing, message->is_outgoing_);
-    if (self->isOutgoing) {
-        if (message->sending_state_ != nullptr) {
-            self.setValue(&MessageModel::status, MessageModel::SendStatus::SENDING);
-        } else {
-            self.setValue(&MessageModel::status, MessageModel::SendStatus::UNREAD);
-        }
-    }
+    isOutgoing = message->is_outgoing_;
+    sendingState = MessageSendingState::make(message->sending_state_);
 }
 
-MessageModel::Content MessageModel::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
+Message::Content Message::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
     Content result;
     td::td_api::downcast_call(*content, aui::lambda_overloaded{
             [&](td::td_api::messageText& u) {
@@ -82,16 +80,42 @@ MessageModel::Content MessageModel::makeContent(td::td_api::object_ptr<td::td_ap
     return result;
 }
 
-AString MessageModel::sendStatusToIcon(MessageModel::SendStatus status) {
-    switch (status) {
-        case SendStatus::NONE: return "";
-        case SendStatus::SENDING:
+APropertyPrecomputed<TGIco::Icon>::Factory Message::statusIconProperty() {
+    return [&] {
+        if (std::holds_alternative<MessageSendingState::Pending>(sendingState->value)) {
             return TGIco::CHECKMARK5_CLOCK;
-        case SendStatus::UNREAD:
-            return TGIco::UNREAD;
-        case SendStatus::READ:
+        }
+        auto chat = this->chat.lock();
+        if (!chat) {
+            return TGIco::XYI_ZNAET;
+        }
+        auto app = chat->app.lock();
+        if (!app) {
+            return TGIco::XYI_ZNAET;
+        }
+        if (app->myId() != userId) {
+            return TGIco::NONE;
+        }
+        if (chat->outboxLastReadMessage >= id) {
             return TGIco::READ;
-    }
-    return "";
+        }
+        return TGIco::UNREAD;
+    };
 }
 
+AString Message::dateShortFmt(std::chrono::system_clock::time_point time) {
+    return "{:%H:%M}"_format(time);
+}
+AString Message::dateFmt(std::chrono::system_clock::time_point time) {
+    const auto NOW = system_clock::now();
+    if (NOW - time <= 24h) {
+        return "{:%R}"_format(time); // 12:00, 03:43
+    }
+    if (NOW - time <= days(7)) {
+        return "{:%a}"_format(time); // Fri, Wed
+    }
+    if (std::chrono::floor<years>(NOW) != std::chrono::floor<years>(time)) {
+        return "{:%D}"_format(time); // 12/30/2024
+    }
+    return "{:%m/%d}"_format(time); // 12/30
+}
