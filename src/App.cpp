@@ -64,6 +64,15 @@ void App::initClientManager() {
 
 void App::sendQuery(td::td_api::object_ptr<td::td_api::Function> f, std::function<void(Object)> handler) {
 #if !CLIENT_DEMO
+    if (mQueryCountLastUpdate++ >= 5) {
+        // Telegram is strict about using 3rdparty telegram clients. For this reason, we have to ensure that we wouldn't
+        // trigger their security leading to ban of the account.
+        //
+        // If the application starts to SPAM with queries, we simply crash it.
+        throw AException("too many queries");
+    }
+
+
     auto query_id = ++mCurrentQueryId;
     if (handler) {
         mHandlers.emplace(query_id, std::move(handler));
@@ -201,6 +210,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
 
 void App::update() {
 #if !CLIENT_DEMO
+    mQueryCountLastUpdate = 0;
     for (;;) {
         auto response = mClientManager->receive(0);
         if (!response.object) {

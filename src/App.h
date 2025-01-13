@@ -75,6 +75,7 @@ public:
    private:
     _unique<td::ClientManager> mClientManager;
     int64_t mMyId = 0;
+    size_t mQueryCountLastUpdate = 0;
     td::ClientManager::ClientId mClientId;
     std::uint64_t mCurrentQueryId{0};
     AMap<std::uint64_t, std::function<void(Object)>> mHandlers;

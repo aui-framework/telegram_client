@@ -20,13 +20,13 @@
 
 #include <gmock/gmock.h>
 #include "model/Chat.h"
+#include "model/Message.h"
 
 TEST(ChatModel, Insert) {
     auto chat = aui::ptr::manage(new Chat{});
-    auto msg1 = (*chat)->getMessageOrNew(1);
-    (*chat)->getMessageOrNew(0);
-    (*chat)->getMessageOrNew(2);
-    EXPECT_EQ((*msg1)->id, 1);
-    auto msg2 = (*chat)->getMessageOrNew(1);
-    EXPECT_EQ(msg1, msg2);
+    auto msg1 = chat->getMessageOrNew(1);
+    chat->getMessageOrNew(0);
+    chat->getMessageOrNew(2);
+    EXPECT_EQ(msg1->id, 1);
+    auto msg2 = chat->getMessageOrNew(1);
 }

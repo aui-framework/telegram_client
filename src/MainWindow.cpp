@@ -24,6 +24,7 @@
 #include <AUI/View/ALabel.h>
 #include <AUI/View/AScrollbar.h>
 #include <AUI/Util/ANoiseDrawable.h>
+#include <AUI/View/AText.h>
 
 #include "view/TGIco.h"
 
@@ -54,7 +55,7 @@ MainWindow::MainWindow(_<App> app)
     getContentContainer()->setExtraStylesheet({
       // clear aui default styles.
       {
-        t<AView>(),
+        { t<ALabel>(), t<AText>() },
         TextColor { 0xf3f3f3_rgb },
         BackgroundSolid { nullptr },
         Border { nullptr },
@@ -68,6 +69,7 @@ MainWindow::MainWindow(_<App> app)
         Padding { 0 },
         Margin { 0 },
       },
+
 
       {
         c(".container_color"),
