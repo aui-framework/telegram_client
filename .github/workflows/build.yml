@@ -2,6 +2,8 @@ name: Build
 
 on:
   push:
+    branches:
+      - master
     tags:
       - v*
   pull_request:
@@ -41,7 +43,7 @@ jobs:
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -GNinja -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=OFF ${{matrix.additional_cmake_flags}} -DAUI_IGNORE_OPENSSL=TRUE -DAUI_INSTALL_RUNTIME_DEPENDENCIES=TRUE -DTELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }} -DTELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }}
+        run: cmake -G "${{ matrix.os=='windows-latest' && 'Visual Studio 17 2022' || 'Ninja' }}" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=OFF ${{matrix.additional_cmake_flags}} -DAUI_IGNORE_OPENSSL=TRUE -DAUI_INSTALL_RUNTIME_DEPENDENCIES=TRUE -DTELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }} -DTELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }}
 
       - name: Build project
         # Build your program with the given configuration
