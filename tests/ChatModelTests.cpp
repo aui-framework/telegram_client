@@ -1,4 +1,4 @@
-// AUI Telegram Client - example of using AUI Framework
+// AUIgram - example of using AUI Framework
 // Copyright (C) 2024 Alex2772 and Contributors
 //
 // This program is free software: you can redistribute it and/or modify

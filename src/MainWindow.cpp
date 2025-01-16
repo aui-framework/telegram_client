@@ -1,4 +1,4 @@
-// AUI Telegram Client - example of using AUI Framework
+// AUIgram - example of using AUI Framework
 // Copyright (C) 2024 Alex2772 and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 using namespace declarative;
 
 MainWindow::MainWindow(_<App> app)
-  : ACustomCaptionWindow("AUI Telegram Client", 800_dp, 500_dp, true), mApp(std::move(app)) {
+  : ACustomCaptionWindow("AUIgram", 800_dp, 500_dp, true), mApp(std::move(app)) {
     getContentContainer()->setContents(Centered { Label { "Starting..." } });
     *this << ".container_chat_background_color";
     setExtraStylesheet({

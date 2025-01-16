@@ -1,6 +1,6 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
-project(telegram_client)
+project(auigram)
 
 option(CLIENT_DEMO OFF "Demo mode (for a screenshot)")
 set(TELEGRAM_API_ID "" CACHE STRING "telegram api id")
@@ -53,3 +53,6 @@ endif()
 aui_compile_assets(${PROJECT_NAME})
 aui_enable_tests(${PROJECT_NAME})
 
+aui_app(TARGET auigram
+        NAME AUIgram
+)

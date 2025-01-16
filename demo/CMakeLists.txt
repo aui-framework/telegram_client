@@ -1,1 +1,1 @@
-auib_add_srcs(telegram_client ${CMAKE_CURRENT_SOURCE_DIR}/src)
+auib_add_srcs(auigram ${CMAKE_CURRENT_SOURCE_DIR}/src)
