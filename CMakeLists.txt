@@ -16,7 +16,7 @@ if (NOT CLIENT_DEMO)
     endif()
 endif()
 
-set(AUI_VERSION v7.0.0-rc.2)
+set(AUI_VERSION v7.0.0-rc.8)
 
 set(BUILD_SHARED_LIBS OFF)
 
