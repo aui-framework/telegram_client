@@ -83,12 +83,12 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                                       return nullptr;
                                   }
                                   return Horizontal {
-                                      _new<TGIco>() with_style { FontSize(10_pt) } << ".accent_textcolor" &
+                                      _new<TGIco>() with_style { FontSize{10_pt} } << ".accent_textcolor" &
                                           msg->statusIcon > &TGIco::setIconHideIfNone,
                                       Label {} with_style { Opacity(0.6f), Margin(0) } &
                                           msg->date.readProjected(Message::dateFmt),
                                   } with_style {
-                                      LayoutSpacing(2_dp),
+                                      LayoutSpacing{2_dp},
                                   };
                               }),
                             },
@@ -113,7 +113,7 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                                     }) > &AView::visibility,
                               },
                             } with_style {
-                              LayoutSpacing(2_dp),
+                              LayoutSpacing{2_dp},
                             },
                           },
                         },
