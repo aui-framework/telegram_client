@@ -52,7 +52,7 @@ endif()
 
 aui_compile_assets(${PROJECT_NAME})
 aui_enable_tests(${PROJECT_NAME})
-
-aui_app(TARGET auigram
-        NAME AUIgram
-)
+#
+#aui_app(TARGET auigram
+#        NAME AUIgram
+#)
