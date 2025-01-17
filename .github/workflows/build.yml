@@ -79,16 +79,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         working-directory: ${{github.workspace}}/build/bin
         run: ${{github.workspace}}/build/bin/Tests
-
-      - name: Pack
-        working-directory: ${{github.workspace}}/build
-        run: cpack . -CRelWithDebInfo
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          path: ${{github.workspace}}/build/*.tar.gz
-          name: ${{ matrix.os }}
+#
+#      - name: Pack
+#        working-directory: ${{github.workspace}}/build
+#        run: cpack . -CRelWithDebInfo
+#
+#      - name: Upload
+#        uses: actions/upload-artifact@v4
+#        with:
+#          path: ${{github.workspace}}/build/*.tar.gz
+#          name: ${{ matrix.os }}
 
   release:
     runs-on: ubuntu-latest
