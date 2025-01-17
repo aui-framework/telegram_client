@@ -16,7 +16,7 @@ if (NOT CLIENT_DEMO)
     endif()
 endif()
 
-set(AUI_VERSION v7.0.0-rc.9)
+set(AUI_VERSION c80ee73e4ce0b6680925c054afc651eb4eea8ffe)
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -52,7 +52,7 @@ endif()
 
 aui_compile_assets(${PROJECT_NAME})
 aui_enable_tests(${PROJECT_NAME})
-#
-#aui_app(TARGET auigram
-#        NAME AUIgram
-#)
+
+aui_app(TARGET auigram
+        NAME AUIgram
+)
