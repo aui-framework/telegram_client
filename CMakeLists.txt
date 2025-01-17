@@ -55,4 +55,5 @@ aui_enable_tests(${PROJECT_NAME})
 
 aui_app(TARGET auigram
         NAME AUIgram
+        ICON logo.svg
 )
