@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(auigram)
 
 option(CLIENT_DEMO OFF "Demo mode (for a screenshot)")
+option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 set(TELEGRAM_API_ID "" CACHE STRING "telegram api id")
 set(TELEGRAM_API_HASH "" CACHE STRING "telegram api hash")
 
@@ -16,9 +17,8 @@ if (NOT CLIENT_DEMO)
     endif()
 endif()
 
-set(AUI_VERSION c80ee73e4ce0b6680925c054afc651eb4eea8ffe)
+set(AUI_VERSION b35b19fd068046514270a87c4bc05aa35bfdc6b5)
 
-set(BUILD_SHARED_LIBS OFF)
 
 # Use AUI.Boot
 file(
@@ -56,4 +56,5 @@ aui_enable_tests(${PROJECT_NAME})
 aui_app(TARGET auigram
         NAME AUIgram
         ICON logo.svg
+        COPYRIGHT "GPL v3"
 )
