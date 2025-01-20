@@ -57,10 +57,13 @@ jobs:
       - name: Install macos dependencies
         if: matrix.os == 'macos-latest'
         run: brew install ninja
+
       - name: Configure CMake
-        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: cmake -G "${{ matrix.os=='windows-latest' && 'Visual Studio 17 2022' || 'Ninja' }}" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=OFF ${{matrix.additional_cmake_flags}} -DAUI_IGNORE_OPENSSL=TRUE -DAUI_INSTALL_RUNTIME_DEPENDENCIES=TRUE -DTELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }} -DTELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }}
+
+      - name: Configure CPack
+        if: matrix.os == 'windows-latest'
+        run: cmake -B ${{github.workspace}}/build -DCPACK_GENERATOR=INNOSETUP
 
       - name: Build project
         # Build your program with the given configuration
@@ -79,16 +82,17 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         working-directory: ${{github.workspace}}/build/bin
         run: ${{github.workspace}}/build/bin/Tests
-#
-#      - name: Pack
-#        working-directory: ${{github.workspace}}/build
-#        run: cpack . -CRelWithDebInfo
-#
-#      - name: Upload
-#        uses: actions/upload-artifact@v4
-#        with:
-#          path: ${{github.workspace}}/build/*.tar.gz
-#          name: ${{ matrix.os }}
+
+      - name: Pack
+        working-directory: ${{github.workspace}}/build
+        run: cpack . -CRelWithDebInfo
+
+      - name: Upload
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{github.workspace}}/build/*.exe
+          name: ${{ matrix.os }}
 
   release:
     runs-on: ubuntu-latest
@@ -138,7 +142,7 @@ jobs:
           name: ${{ matrix.os }}
 
       - id: getfilename
-        run: echo "::set-output name=file::$(ls *.tar.gz)"
+        run: echo "::set-output name=file::$(ls *)"
 
       - name: Upload to Release
         id: upload_to_release
