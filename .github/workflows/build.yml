@@ -87,12 +87,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{github.workspace}}/build/*.exe
+          name: ${{ matrix.os }}
 
       - name: Upload (Linux)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           path: ${{github.workspace}}/build/*.gz
+          name: ${{ matrix.os }}
 
 
   release-draft:
