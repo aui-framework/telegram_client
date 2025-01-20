@@ -1,10 +1,10 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
-project(project_template_assets_ui)
+project(aui_app VERSION 0.0.1)
 
-# Tip: in a production project don't use branch name, use a specific name tag (i.e. v1.1.1),
-# but for a sandbox project branch name is perfectly enough
-set(AUI_VERSION master)
+option(BUILD_SHARED_LIBS "Build shared libs" OFF)
+
+set(AUI_VERSION v7.0.0-rc.11)
 
 # Use AUI.Boot
 file(
@@ -26,4 +26,15 @@ aui_executable(${PROJECT_NAME})
 # Link required libs
 aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views)
 
+# Compile assets
 aui_compile_assets(${PROJECT_NAME})
+
+# Enable testing
+aui_enable_tests(${PROJECT_NAME})
+
+# Setup icon, display name, etc
+aui_app(TARGET ${PROJECT_NAME}
+        NAME "AUI App Example"
+        VENDOR "AUI Project"
+        ICON "assets/img/icon.svg"
+)

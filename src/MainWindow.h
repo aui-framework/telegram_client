@@ -5,4 +5,5 @@
 class MainWindow: public AWindow {
 public:
     MainWindow();
+    static int sum(int a, int b);
 };

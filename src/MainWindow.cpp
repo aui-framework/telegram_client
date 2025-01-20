@@ -11,7 +11,7 @@ MainWindow::MainWindow(): AWindow("Project template app", 300_dp, 200_dp) {
     setContents(
         Centered{
             Vertical{
-                Centered { Icon { ":img/logo.svg" } with_style { FixedSize(64_dp) } },
+                Centered { Icon { ":img/icon.svg" } with_style { FixedSize(64_dp) } },
                 Centered { Label { "Hello world from AUI!" } },
                 _new<AButton>("Visit GitHub repo").connect(&AView::clicked, this, [] {
                     APlatform::openUrl("https://github.com/aui-framework/aui");
@@ -22,7 +22,9 @@ MainWindow::MainWindow(): AWindow("Project template app", 300_dp, 200_dp) {
                 _new<AButton>("Submit an issue").connect(&AView::clicked, this, [] {
                     APlatform::openUrl("https://github.com/aui-framework/aui/issues/new");
                 }),
+                Label { "Btw, 2 + 2 = {}"_format(sum(2, 2)) },
             }
         }
     );
 }
+int MainWindow::sum(int a, int b) { return a + b; }
