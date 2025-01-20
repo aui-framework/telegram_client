@@ -26,9 +26,8 @@ jobs:
         os: [windows-latest, ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
+      - name: Fetch sources
+        uses: actions/checkout@v4
 
       # Cache AUI boot directory
       - name: Cache AUI.BOOT deps
@@ -98,63 +97,39 @@ jobs:
           name: ${{ matrix.os }}
 
 
-  release:
+  release-draft:
     runs-on: ubuntu-latest
     permissions: write-all
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    name: "Create release page"
+    if: github.event_name != 'pull_request'
+    needs: [ build-desktop ]
+    name: "Release draft"
     steps:
-      - name: Retrieve version
-        if: ${{ contains(github.ref, 'tags/v') }}
-        run: |
-          echo "TAG_NAME=${{ github.ref }} " >> $GITHUB_ENV
-          echo "RELEASE_NAME=${{ github.ref }} " >> $GITHUB_ENV
+      - name: Fetch sources
+        uses: actions/checkout@v4
 
-      - name: Output version
-        id: version
+      - name: Extract version
         run: |
-          echo "ref=$TAG_NAME" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.1.4
+          VERSION=$(grep -Po '[0-9\.]+ (?=# CI_PROJECT_VERSION)' CMakeLists.txt)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION = $VERSION"
+          
+      # Remove old release drafts
+      - name: Remove Old Release Drafts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: ${{ env.RELEASE_NAME }}
-          draft: false
-          prerelease: true
+        run: |
+          gh api repos/{owner}/{repo}/releases \
+            --jq '.[] | select(.draft == true) | .id' \
+            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{} 
+
+      - name: Create Release Draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ env.VERSION }}" \
+            --draft \
+            --title "v${{ env.VERSION }}"
+
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       ref: ${{ steps.version.outputs.ref }}
-
-  publish:
-    name: Publish ${{ matrix.os }}
-    runs-on: ubuntu-latest
-    needs: [build-desktop, release]
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          path: ./
-          name: ${{ matrix.os }}
-
-      - id: getfilename
-        run: echo "::set-output name=file::$(ls *)"
-
-      - name: Upload to Release
-        id: upload_to_release
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ${{ steps.getfilename.outputs.file }}
-          asset_name: ${{ steps.getfilename.outputs.file }}
-          asset_content_type: application/x-gtar

@@ -1,6 +1,8 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
-project(aui_app VERSION 0.0.1)
+project(aui_app
+        VERSION 0.0.1 # CI_PROJECT_VERSION
+    )
 
 option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 

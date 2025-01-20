@@ -9,11 +9,16 @@ project.
 The main goal of this template is to speed up the setup phase of application development for both new and experienced
 developers by preconfiguring the project scaffold and CI set up on GitHub.
 
+This template features:
+- Building, testing, code quality checking and releasing with [GitHub Actions][gh:actions]
+- Application auto updating (Windows only)
+- AUI assets
+- Tests
+
 # Getting Started
 
 It is worth mentioning the benefits of using GitHub Templates. By created a new project using a template, you start with
 no history or reference to this repository.
-
 
 # Continuous Integration
 
@@ -23,8 +28,12 @@ automation of building, testing and releasing process.
 In the `.github/workflows` directory, you can find definitions for the following GitHub Actions workflows:
 - [Build](.github/workflows/build.yml)
   - Triggered on `push` and `pull_request` events.
+  - Builds the project for the supported platforms.
+  - Runs Tests.
+  - Generates installable packages.
+  - Prepares a draft release of the GitHub Releases page for manual review.
 - [Code Quality](.github/workflows/code-quality.yml)
-  - Triggered on `push` and `pull_request` events.
+  - Triggered on `pull_request` events.
   - Performs `clang-tidy` checks (static analysis) and generates nice summary with `.github/tidy-summary.py`.
   - Performs `valgrind` checks on tests (dynamic analysis).
 
@@ -32,3 +41,8 @@ In the `.github/workflows` directory, you can find definitions for the following
 # Code Quality and Formatting
 
 The template includes `.clang-format` and `.clang-tidy`, the latter is used for code quality checks.
+
+# Release Process
+
+To create a release, simply push an update to version in `CMakeLists.txt`. Pipeline will create a GitHub Release Draft
+for you. After release draft is created, perform manual review and submit release.

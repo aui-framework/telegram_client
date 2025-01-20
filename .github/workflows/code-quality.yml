@@ -1,9 +1,6 @@
 name: Code Quality
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
 
 concurrency:
@@ -11,7 +8,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   GIT_SUBMODULE_STRATEGY: recursive
 
 permissions:
