@@ -23,6 +23,10 @@ automation of building, testing and releasing process.
 In the `.github/workflows` directory, you can find definitions for the following GitHub Actions workflows:
 - [Build](.github/workflows/build.yml)
   - Triggered on `push` and `pull_request` events.
+- [Code Quality](.github/workflows/code-quality.yml)
+  - Triggered on `push` and `pull_request` events.
+  - Performs `clang-tidy` checks (static analysis) and generates nice summary with `.github/tidy-summary.py`.
+  - Performs `valgrind` checks on tests (dynamic analysis).
 
 
 # Code Quality and Formatting

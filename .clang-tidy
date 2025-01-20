@@ -85,7 +85,10 @@ Checks: >
   -modernize-use-using,
 
 
-WarningsAsErrors: '*'
+# we have a pipeline that treats those as errors; during development, it may be too noisy
+#WarningsAsErrors: '*'
+
+HeaderFilterRegex: '^.*/src/.*$'
 
 FormatStyle:     google
 CheckOptions:
