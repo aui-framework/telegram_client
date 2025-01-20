@@ -87,14 +87,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{github.workspace}}/build/*.exe
-          name: ${{ matrix.os }}
 
       - name: Upload (Linux)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           path: ${{github.workspace}}/build/*.gz
-          name: ${{ matrix.os }}
 
 
   release-draft:
@@ -122,14 +120,16 @@ jobs:
             --jq '.[] | select(.draft == true) | .id' \
             | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{} 
 
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
       - name: Create Release Draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "v${{ env.VERSION }}" \
             --draft \
-            --title "v${{ env.VERSION }}"
-
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      ref: ${{ steps.version.outputs.ref }}
+            --title "v${{ env.VERSION }}" \
+            artifacts/*
