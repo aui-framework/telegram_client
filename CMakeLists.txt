@@ -6,7 +6,7 @@ project(aui_app
 
 option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 
-set(AUI_VERSION v7.0.0-rc.11)
+set(AUI_VERSION fb381937a2879c29c3861da3612889994315621e)
 
 # Use AUI.Boot
 file(
