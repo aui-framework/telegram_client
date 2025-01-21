@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-2019, ubuntu-latest]
 
     steps:
       - name: Fetch sources
@@ -52,10 +52,10 @@ jobs:
         run: brew install ninja
 
       - name: Configure CMake
-        run: cmake -G "${{ matrix.os=='windows-latest' && 'Visual Studio 17 2022' || 'Ninja' }}" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=RelWithDebInfo ${{matrix.additional_cmake_flags}} -DAUI_INSTALL_RUNTIME_DEPENDENCIES=TRUE
+        run: cmake -G "${{ matrix.os=='windows-2019' && 'Visual Studio 16 2019' || 'Ninja' }}" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=RelWithDebInfo ${{matrix.additional_cmake_flags}} -DAUI_INSTALL_RUNTIME_DEPENDENCIES=TRUE
 
       - name: Configure CPack (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         run: cmake -B ${{github.workspace}}/build -DCPACK_GENERATOR=INNOSETUP
 
       - name: Configure CPack (Linux)
@@ -69,7 +69,7 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config RelWithDebInfo --target Tests
 
       - name: Run Tests (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         working-directory: ${{github.workspace}}/build/bin/RelWithDebInfo/
         run: ${{github.workspace}}/build/bin/RelWithDebInfo/Tests.exe
 
@@ -83,7 +83,7 @@ jobs:
         run: cpack . -CRelWithDebInfo
 
       - name: Upload (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         uses: actions/upload-artifact@v4
         with:
           path: ${{github.workspace}}/build/*.exe
