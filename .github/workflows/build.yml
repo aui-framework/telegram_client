@@ -37,9 +37,9 @@ jobs:
           cache-name: cache-aui-boot
         with:
           path: ~/.aui
-          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}
+            ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
@@ -139,4 +139,4 @@ jobs:
           gh release create "v${{ env.VERSION }}" \
             --draft \
             --title "v${{ env.VERSION }}" \
-            artifacts/*
+            artifacts/*.*
