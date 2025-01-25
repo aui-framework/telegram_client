@@ -75,7 +75,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: |
           cmake . -DAUI_APP_PACKAGING=INNOSETUP
-          cmake --build .
+          cmake --build . --config RelWithDebInfo
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Pack Windows Portable
@@ -83,7 +83,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: |
           cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE
-          cmake --build .
+          cmake --build . --config RelWithDebInfo
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Pack Linux Portable
@@ -91,7 +91,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: |
           cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE
-          cmake --build .
+          cmake --build . --config RelWithDebInfo
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Upload
