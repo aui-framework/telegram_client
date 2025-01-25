@@ -23,6 +23,7 @@ MainWindow::MainWindow(): AWindow("Project template app", 300_dp, 200_dp) {
                     APlatform::openUrl("https://github.com/aui-framework/aui/issues/new");
                 }),
                 Label { "Btw, 2 + 2 = {}"_format(sum(2, 2)) },
+                Label { "Version: " AUI_PP_STRINGIZE(AUI_CMAKE_PROJECT_VERSION) },
             }
         }
     );

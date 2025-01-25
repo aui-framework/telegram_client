@@ -70,15 +70,12 @@ jobs:
         working-directory: ${{github.workspace}}/build/bin
         run: ${{github.workspace}}/build/bin/Tests
 
-      - name: Configure CPack (Windows)
-        if: runner.os == 'Windows'
-        run: cmake -B ${{github.workspace}}/build -DCPACK_GENERATOR=INNOSETUP
-
       - name: Pack Windows Setup
         if: runner.os == 'Windows'
         working-directory: ${{github.workspace}}/build
         run: |
           cmake . -DAUI_APP_PACKAGING=INNOSETUP
+          cmake --build .
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Pack Windows Portable
@@ -86,6 +83,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: |
           cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE
+          cmake --build .
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Pack Linux Portable
@@ -93,6 +91,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: |
           cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE
+          cmake --build .
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Upload

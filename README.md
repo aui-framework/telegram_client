@@ -32,6 +32,7 @@ In the `.github/workflows` directory, you can find definitions for the following
   - Triggered on `push` and `pull_request` events.
   - Caches AUI.Boot (`~/.aui`).
     - AUI.Boot will pull precompiled AUI binaries in most cases.
+    - Subsequent builds are faster thanks to `cache` job, no matter whether AUI Boot pulled precompiled binaries.
   - Builds the project for the supported platforms.
   - Runs Tests.
   - Generates installable packages.
