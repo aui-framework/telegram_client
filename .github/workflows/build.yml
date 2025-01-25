@@ -34,7 +34,7 @@ jobs:
         id: cache-aui-boot
         uses: actions/cache@v3
         env:
-          cache-name: cache-aui-boot
+          cache-name: aui-boot
         with:
           path: ~/.aui
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/CMakeLists.txt') }}
