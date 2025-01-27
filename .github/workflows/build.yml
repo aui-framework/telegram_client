@@ -82,22 +82,30 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: ${{github.workspace}}/build
         run: |
-          cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE
+          cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE_ZIP
           cmake --build . --config RelWithDebInfo
           cpack . -CRelWithDebInfo -B artifacts
 
-      - name: Pack Linux Portable
+      - name: Pack Linux Portable (ZIP)
         if: runner.os == 'Linux'
         working-directory: ${{github.workspace}}/build
         run: |
-          cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE
+          cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE_ZIP
+          cmake --build . --config RelWithDebInfo
+          cpack . -CRelWithDebInfo -B artifacts
+
+      - name: Pack Linux Portable (tar.gz)
+        if: runner.os == 'Linux'
+        working-directory: ${{github.workspace}}/build
+        run: |
+          cmake . -DAUI_APP_PACKAGING=AUI_PORTABLE_TGZ
           cmake --build . --config RelWithDebInfo
           cpack . -CRelWithDebInfo -B artifacts
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          path: ${{github.workspace}}/build/artifacts/*
+          path: ${{github.workspace}}/build/artifacts/*.*
           name: ${{ runner.os }}
 
 
@@ -113,7 +121,7 @@ jobs:
 
       - name: Extract version
         run: |
-          VERSION=$(grep -Po '[0-9\.]+ (?=# CI_PROJECT_VERSION)' CMakeLists.txt)
+          VERSION=$(grep -Po '[0-9\.]+(?= # CI_PROJECT_VERSION)' CMakeLists.txt)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION = $VERSION"
           

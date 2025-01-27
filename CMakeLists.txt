@@ -1,12 +1,12 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
 project(example_app
-        VERSION 0.0.1 # CI_PROJECT_VERSION
+        VERSION 0.0.2 # CI_PROJECT_VERSION
     )
 
 option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 
-set(AUI_VERSION 11b13eda34afd921f56045a899c65f4caa44b643)
+set(AUI_VERSION f7d3d53ece23442a2b8fd9257d499f68da76a92d)
 
 # Use AUI.Boot
 file(
@@ -17,7 +17,7 @@ include(${CMAKE_CURRENT_BINARY_DIR}/aui.boot.cmake)
 
 # import AUI
 auib_import(aui https://github.com/aui-framework/aui
-        COMPONENTS core views
+        COMPONENTS core views curl json crypt updater
         VERSION ${AUI_VERSION})
 
 
@@ -26,7 +26,7 @@ auib_import(aui https://github.com/aui-framework/aui
 aui_executable(${PROJECT_NAME})
 
 # Link required libs
-aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views)
+aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views aui::updater)
 
 # Compile assets
 aui_compile_assets(${PROJECT_NAME})
