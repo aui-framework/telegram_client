@@ -25,8 +25,10 @@
 #include <AUI/View/AScrollbar.h>
 #include <AUI/Util/ANoiseDrawable.h>
 #include <AUI/View/AText.h>
+#include <AUI/View/ASpinner.h>
 
 #include "view/TGIco.h"
+#include <App.h>
 
 using namespace declarative;
 
@@ -46,12 +48,18 @@ MainWindow::MainWindow(_<App> app)
       },
     });
 
-    getCaptionContainer()->setContents(Centered {
+    getContentContainer() << ".container_chat_background_color";
+    getCaptionContainer()->setContents(Stacked {
+      Horizontal::Expanding {
+        _new<ASpacerExpanding>(),
+        _new<ASpinner>() & mApp->hasPendingNetworkActivity > &AView::setVisible,
+      },
 #if !CLIENT_DEMO
-      Label { "Proof of concept. Not a production app" } with_style { Opacity(0.5f), TextColor { AColor::RED } },
+      Centered {
+          Label { "Proof of concept. Not a production app" } with_style { Opacity(0.5f), TextColor { AColor::RED } },
+      },
 #endif
     });
-    getContentContainer() << ".container_chat_background_color";
     getContentContainer()->setExtraStylesheet({
       // clear aui default styles.
       {

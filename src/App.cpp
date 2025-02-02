@@ -77,6 +77,7 @@ void App::sendQuery(td::td_api::object_ptr<td::td_api::Function> f, std::functio
     if (handler) {
         mHandlers.emplace(query_id, std::move(handler));
     }
+    hasPendingNetworkActivity = true;
     mClientManager->send(mClientId, query_id, std::move(f));
 #endif
 }
@@ -89,7 +90,7 @@ void App::processResponse(td::ClientManager::Response response) {
 
     if (auto c = mHandlers.contains(response.request_id)) {
         auto handler = std::move(c->second);
-        mHandlers.erase(c);
+        mHandlers.erase(*c);
         handler(std::move(response.object));
         return;
     }
@@ -204,6 +205,16 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                         msg->id = u.message_->id_;
                         msg->populateFrom(std::move(u.message_));
                     },
+                    [this](td::td_api::updateConnectionState& u) {
+                       td::td_api::downcast_call(*u.state_, aui::lambda_overloaded{
+                           [&](td::td_api::connectionStateReady&) {
+                               mWarmupComplete = true;
+                           },
+                           [&](auto&&) {
+                               mWarmupComplete = false;
+                           },
+                       });
+                    },
                     Stub{}});
 #endif
 }
@@ -214,6 +225,7 @@ void App::update() {
     for (;;) {
         auto response = mClientManager->receive(0);
         if (!response.object) {
+            hasPendingNetworkActivity = !mHandlers.empty() || !mWarmupComplete;
             return;
         }
         processResponse(std::move(response));
