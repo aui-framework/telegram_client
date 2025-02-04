@@ -1,12 +1,12 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
 project(example_app
-        VERSION 0.0.7 # CI_PROJECT_VERSION
+        VERSION 0.0.8 # CI_PROJECT_VERSION
     )
 
 option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 
-set(AUI_VERSION fb9313a3a6cec7999bc42d1db16a31c1280ef6ff)
+set(AUI_VERSION a98b704e4cda510781ea2d0931c1c7b6e755912c)
 
 # Use AUI.Boot
 file(

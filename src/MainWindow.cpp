@@ -20,30 +20,24 @@ MainWindow::MainWindow(_<MyUpdater> updater)
       _new<AButton>("Submit an issue")
           .connect(
               &AView::clicked, this, [] { APlatform::openUrl("https://github.com/aui-framework/aui/issues/new"); }),
-      CustomLayout {} & mUpdater->status.readProjected([&updater = mUpdater](const AUpdater::Status& status) {
-          return std::visit(
-              aui::lambda_overloaded {
-                [&](const AUpdater::StatusIdle&) -> _<AView> {
-                    return _new<AButton>("Check for updates").connect(&AView::clicked, slot(updater)::checkForUpdates);
-                },
-                [&](const AUpdater::StatusCheckingForUpdates&) -> _<AView> {
-                    return Label { "Checking for updates..." };
-                },
-                [&](const AUpdater::StatusDownloading& s) -> _<AView> {
-                    return Vertical {
-                        Label { "Downloading..." },
-                        _new<AProgressBar>() let { it->setValue(s.progress); },
-                    };
-                },
-                [&](const AUpdater::StatusWaitingForApplyAndRestart&) -> _<AView> {
-                    return _new<AButton>("Apply update and restart")
-                        .connect(&AView::clicked, slot(updater)::applyUpdateAndRestart);
-                },
-                [&](const AUpdater::StatusNotAvailable&) -> _<AView> {
-                    return nullptr;
-                },
-              },
-              status);
+      CustomLayout {} & mUpdater->status.readProjected([&updater = mUpdater](const std::any& status) -> _<AView> {
+          if (std::any_cast<AUpdater::StatusIdle>(&status)) {
+              return _new<AButton>("Check for updates").connect(&AView::clicked, slot(updater)::checkForUpdates);
+          }
+          if (std::any_cast<AUpdater::StatusCheckingForUpdates>(&status)) {
+              return Label { "Checking for updates..." };
+          }
+          if (auto downloading = std::any_cast<AUpdater::StatusDownloading>(&status)) {
+              return Vertical {
+                  Label { "Downloading..." },
+                  _new<AProgressBar>() & downloading->progress,
+              };
+          }
+          if (std::any_cast<AUpdater::StatusWaitingForApplyAndRestart>(&status)) {
+              return _new<AButton>("Apply update and restart")
+                  .connect(&AView::clicked, slot(updater)::applyUpdateAndRestart);
+          }
+          return nullptr;
       }),
       Label { "Btw, 2 + 2 = {}"_format(sum(2, 2)) },
       Label { "Version: " AUI_PP_STRINGIZE(AUI_CMAKE_PROJECT_VERSION) },
