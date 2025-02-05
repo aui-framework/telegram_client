@@ -147,5 +147,5 @@ jobs:
           gh release create "v${{ env.VERSION }}" \
             --draft \
             --title "v${{ env.VERSION }}" \
-            --target "${GITHUB_SHA}" \
+            --target ${GITHUB_SHA} \
             artifacts/*.*
