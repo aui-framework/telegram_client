@@ -1,6 +1,9 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
-project(auigram)
+project(auigram
+        VERSION 0.0.3 # CI_PROJECT_VERSION
+)
+
 
 option(CLIENT_DEMO OFF "Demo mode (for a screenshot)")
 option(BUILD_SHARED_LIBS "Build shared libs" OFF)
