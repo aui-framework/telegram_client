@@ -17,7 +17,7 @@ if (NOT CLIENT_DEMO)
     endif()
 endif()
 
-set(AUI_VERSION v7.0.0-rc.11)
+set(AUI_VERSION v7.0.0-rc.17)
 
 
 # Use AUI.Boot

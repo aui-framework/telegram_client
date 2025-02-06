@@ -29,6 +29,7 @@
 
 #include "view/TGIco.h"
 #include <App.h>
+#include <AUI/View/ASpinnerV2.h>
 
 using namespace declarative;
 
@@ -46,13 +47,19 @@ MainWindow::MainWindow(_<App> app)
         c(".window-title"),
         BackgroundSolid { nullptr },
       },
+      {
+        t<ASpinnerV2>(),
+        BackgroundImage { {}, 0x50ffffff_argb },
+      }
     });
 
     getContentContainer() << ".container_chat_background_color";
     getCaptionContainer()->setContents(Stacked {
       Horizontal::Expanding {
         _new<ASpacerExpanding>(),
-        _new<ASpinner>() & mApp->hasPendingNetworkActivity > &AView::setVisible,
+        Centered {
+          _new<ASpinnerV2>() & mApp->hasPendingNetworkActivity > &AView::setVisible,
+        },
       },
 #if !CLIENT_DEMO
       Centered {
@@ -85,8 +92,8 @@ MainWindow::MainWindow(_<App> app)
       },
       {
         c(".container_color_blur"),
-        BackgroundSolid { (0x16202a_rgb).transparentize(0.3f) },
         Backdrop { Backdrop::GaussianBlur { 64_dp } },
+        BackgroundSolid { (0x16202a_rgb).transparentize(0.3f) },
         BackgroundImage { _new<ANoiseDrawable>(), 0x02ffffff_argb },
       },
       {
