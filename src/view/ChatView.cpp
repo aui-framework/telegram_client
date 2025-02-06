@@ -175,14 +175,20 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                     it << ".container_chat_background_color";
                 },
             Horizontal {
-              AScrollArea::Builder().withContents(mInput).build() with_style {
+              AScrollArea::Builder().withContents(mInput << ".send_input").build() with_style {
                 Expanding(1, 0),
                 MaxSize { {}, 300_dp },
                 Padding { 8_dp },
               },
               Vertical {
                 SpacerExpanding(),
-                Button { "Send" }.connect(&AView::clicked, me::send),
+                _new<TGIco>(TGIco::Icon::SEND).connect(&AView::clicked, me::send) with_style {
+                  Padding(4_dp),
+                  BorderRadius(8_dp),
+                  on_state::Hovered {
+                    BackgroundSolid { 0x80aaaaaa_argb },
+                  },
+                },
               } with_style { Padding(8_dp) },
             } << ".container_color_blur",
           },

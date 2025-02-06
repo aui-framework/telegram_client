@@ -70,7 +70,7 @@ MainWindow::MainWindow(_<App> app)
     getContentContainer()->setExtraStylesheet({
       // clear aui default styles.
       {
-        { t<ALabel>(), t<AText>() },
+        { t<ALabel>(), t<AText>(), c(".send_input") },
         TextColor { 0xf3f3f3_rgb },
         BackgroundSolid { nullptr },
         Border { nullptr },

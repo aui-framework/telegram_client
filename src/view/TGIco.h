@@ -118,7 +118,7 @@ public:
         REPLY2,
 
         UPDATE = 0xe960,
-
+        SEND = 0xe9ef,
     };
     using ALabel::ALabel;
     ~TGIco() override = default;

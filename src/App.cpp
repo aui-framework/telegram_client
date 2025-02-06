@@ -123,7 +123,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                                 parameters->api_hash_ = AUI_PP_STRINGIZE(TELEGRAM_API_HASH);
                                 parameters->system_language_code_ = "en";
                                 parameters->device_model_ = "Desktop";
-                                parameters->application_version_ = "1.0";
+                                parameters->application_version_ = AUI_PP_STRINGIZE(AUI_CMAKE_PROJECT_VERSION);
                                 sendQuery(std::move(parameters));
                             },
                             [this](td::td_api::authorizationStateReady& u) {
