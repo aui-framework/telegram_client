@@ -23,6 +23,7 @@
 #include <AUI/Common/AMap.h>
 #include <AUI/Common/ATimer.h>
 #include "MainWindow.h"
+#include "MyUpdater.h"
 
 struct Chat;
 
@@ -30,7 +31,7 @@ class App: public AObject {
 public:
     using Object = td::td_api::object_ptr<td::td_api::Object>;
 
-    App();
+    App(_<MyUpdater> updater);
 
     void sendQuery(td::td_api::object_ptr<td::td_api::Function> f, std::function<void(Object)> handler = {});
 
@@ -71,6 +72,7 @@ public:
         return mMyId;
     }
     const _<MainWindow>& window() const { return mWindow; }
+    const _<MyUpdater>& autoUpdater() const { return mAutoUpdater; }
 
     AProperty<bool> hasPendingNetworkActivity = true;
 
@@ -83,8 +85,10 @@ private:
     std::uint64_t mCurrentQueryId{0};
     AMap<std::uint64_t, std::function<void(Object)>> mHandlers;
     AMap<std::int64_t, _<Chat>> mChats;
-    _<ATimer> mUpdateTimer;
+    _<ATimer> mTgUpdateTimer;
+    _<ATimer> mAutoUpdateTimer;
     _<MainWindow> mWindow;
+    _<MyUpdater> mAutoUpdater;
 
     void commonHandler(td::tl::unique_ptr<td::td_api::Object> object);
     void processResponse(td::ClientManager::Response response);

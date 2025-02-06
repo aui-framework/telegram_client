@@ -23,6 +23,8 @@ class TGIco: public ALabel {
 public:
     /**
      * @brief Open assets/tgico.ttf in font editor like fontforge
+     * @details
+     * ![](tgico_cheatsheet.png)
      */
     enum Icon {
         NONE = 0,
@@ -114,6 +116,8 @@ public:
         TRANSLATE,
         REPLY1,
         REPLY2,
+
+        UPDATE = 0xe960,
 
     };
     using ALabel::ALabel;

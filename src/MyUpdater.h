@@ -1,5 +1,5 @@
-// AUIgram - example of using AUI Framework
-// Copyright (C) 2024 Alex2772 and Contributors
+// AUI Telegram Client - example of using AUI Framework
+// Copyright (C) 2025 Alex2772 and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,22 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <AUI/Platform/Entry.h>
-#include "App.h"
-#include "MyUpdater.h"
+#pragma once
 
-#if CLIENT_DEMO
-#include "demo.h"
-#endif
+#include <AUI/Updater/AUpdater.h>
 
-AUI_ENTRY {
-    auto updater = _new<MyUpdater>();
-    updater->handleStartup(args);
-    auto app = _new<App>(std::move(updater));
-    app->run();
+class MyUpdater: public AUpdater {
+public:
 
-#if CLIENT_DEMO
-    demo::init(app);
-#endif
-    return 0;
+protected:
+    AFuture<void> downloadUpdateImpl(const APath& unpackedUpdateDir) override;
+    AFuture<void> checkForUpdatesImpl() override;
+
+private:
+    AString mDownloadUrl;
 };

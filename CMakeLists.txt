@@ -29,7 +29,7 @@ include(${CMAKE_CURRENT_BINARY_DIR}/aui.boot.cmake)
 
 # import AUI
 auib_import(aui https://github.com/aui-framework/aui
-        COMPONENTS core views
+        COMPONENTS core views updater crypt curl json
         VERSION ${AUI_VERSION})
 
 # import tdlib (telegram client library)
@@ -41,7 +41,7 @@ auib_import(Td https://github.com/tdlib/td
 aui_executable(${PROJECT_NAME})
 
 # Link required libs
-aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views Td::TdStatic)
+aui_link(${PROJECT_NAME} PRIVATE aui::core aui::views aui::updater Td::TdStatic)
 
 if (CLIENT_DEMO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE CLIENT_DEMO=1)

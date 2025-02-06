@@ -39,12 +39,16 @@ struct Stub {
     }
 };
 
-App::App(): mUpdateTimer(_new<ATimer>(100ms)) {
+App::App(_<MyUpdater> updater): mTgUpdateTimer(_new<ATimer>(500ms)), mAutoUpdater(std::move(updater)), mAutoUpdateTimer(_new<ATimer>(30min)) {
     setSlotsCallsOnlyOnMyThread(true);
-    connect(mUpdateTimer->fired, me::update);
+    connect(mTgUpdateTimer->fired, me::update);
+    connect(mAutoUpdateTimer->fired, slot(mAutoUpdater)::checkForUpdates);
     td::ClientManager::execute(td::td_api::make_object<td::td_api::setLogVerbosityLevel>(1));
     initClientManager();
-    mUpdateTimer->start();
+
+    mTgUpdateTimer->start();
+    mAutoUpdateTimer->start();
+    mAutoUpdater->checkForUpdates();
 }
 
 void App::initClientManager() {
@@ -235,7 +239,7 @@ void App::update() {
 
 void App::run() {
     mWindow = _new<MainWindow>(sharedPtr());
-    mUpdateTimer->start();
+    mTgUpdateTimer->start();
     mWindow->show();
 }
 
