@@ -20,7 +20,7 @@ if (NOT CLIENT_DEMO)
     endif()
 endif()
 
-set(AUI_VERSION v7.0.0-rc.17)
+set(AUI_VERSION 730f529a93be9d05d16a9e96862534b4df2b2499)
 
 
 # Use AUI.Boot
