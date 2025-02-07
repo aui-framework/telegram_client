@@ -36,6 +36,7 @@ struct Chat {
     AProperty<_<IDrawable>> thumbnail;
     AProperty<int64_t> inboxLastReadMessage;
     AProperty<int64_t> outboxLastReadMessage;
+    AProperty<bool> viewAsTopics;
 
     struct TypeUserRegular {
         bool operator==(const TypeUserRegular&) const = default;

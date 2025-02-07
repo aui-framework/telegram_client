@@ -34,12 +34,11 @@ static constexpr auto LOG_TAG = "App";
 using namespace std::chrono_literals;
 
 struct Stub {
-    void operator()(auto& v) const {
-        ALogger::info(LOG_TAG) << "Stub: " << to_string(v);
-    }
+    void operator()(auto& v) const { ALogger::info(LOG_TAG) << "Stub: " << to_string(v); }
 };
 
-App::App(_<MyUpdater> updater): mTgUpdateTimer(_new<ATimer>(500ms)), mAutoUpdater(std::move(updater)), mAutoUpdateTimer(_new<ATimer>(30min)) {
+App::App(_<MyUpdater> updater)
+  : mTgUpdateTimer(_new<ATimer>(500ms)), mAutoUpdater(std::move(updater)), mAutoUpdateTimer(_new<ATimer>(30min)) {
     setSlotsCallsOnlyOnMyThread(true);
     connect(mTgUpdateTimer->fired, me::update);
     connect(mAutoUpdateTimer->fired, slot(mAutoUpdater)::checkForUpdates);
@@ -56,12 +55,11 @@ void App::initClientManager() {
     mClientManager = std::make_unique<td::ClientManager>();
     mClientId = mClientManager->create_client_id();
     sendQuery(td::td_api::make_object<td::td_api::getOption>("version"), [](Object object) {
-        td::td_api::downcast_call(*object, aui::lambda_overloaded {
-            [](td::td_api::optionValueString& u) {
-                ALogger::info(LOG_TAG) << "Tdlib version: " << u.value_;
-            },
-            [](auto&){}
-        });
+        td::td_api::downcast_call(
+            *object,
+            aui::lambda_overloaded {
+              [](td::td_api::optionValueString& u) { ALogger::info(LOG_TAG) << "Tdlib version: " << u.value_; },
+              [](auto&) {} });
     });
 #endif
 }
@@ -76,7 +74,6 @@ void App::sendQuery(td::td_api::object_ptr<td::td_api::Function> f, std::functio
         throw AException("too many queries");
     }
 
-
     auto query_id = ++mCurrentQueryId;
     if (handler) {
         mHandlers.emplace(query_id, std::move(handler));
@@ -90,7 +87,7 @@ void App::processResponse(td::ClientManager::Response response) {
     if (!response.object) {
         return;
     }
-    ALOG_DEBUG(LOG_TAG) << "Response (" << response.request_id << "): " << to_string(response.object);
+//    ALOG_DEBUG(LOG_TAG) << "Response (" << response.request_id << "): " << to_string(response.object);
 
     if (auto c = mHandlers.contains(response.request_id)) {
         auto handler = std::move(c->second);
@@ -102,124 +99,131 @@ void App::processResponse(td::ClientManager::Response response) {
     commonHandler(std::move(response.object));
 }
 
-
-template<typename Anything, typename Handler>
-concept CanBeHandledBy = requires(Anything& anything, Handler& t) {
-    t.handle(anything);
-};
+template <typename Anything, typename Handler>
+concept CanBeHandledBy = requires(Anything& anything, Handler& t) { t.handle(anything); };
 
 void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
 #if !CLIENT_DEMO
     td::td_api::downcast_call(
-            *object, aui::lambda_overloaded{
-                    [this](td::td_api::updateAuthorizationState &update_authorization_state) {
-                        td::td_api::downcast_call(*update_authorization_state.authorization_state_, aui::lambda_overloaded {
-                            [this](td::td_api::authorizationStateWaitTdlibParameters& u) {
-                                auto parameters = td::td_api::make_object<td::td_api::setTdlibParameters>();
-                                parameters->database_directory_ = "tdlib";
-                                parameters->use_message_database_ = true;
-                                parameters->use_secret_chats_ = true;
-                                parameters->api_id_ = TELEGRAM_API_ID;
-                                parameters->api_hash_ = AUI_PP_STRINGIZE(TELEGRAM_API_HASH);
-                                parameters->system_language_code_ = "en";
-                                parameters->device_model_ = "Desktop";
-                                parameters->application_version_ = AUI_PP_STRINGIZE(AUI_CMAKE_PROJECT_VERSION);
-                                sendQuery(std::move(parameters));
-                            },
-                            [this](td::td_api::authorizationStateReady& u) {
-                                auto main = _new<MainView>(sharedPtr());
-                                mWindow->present(std::move(main));
-                            },
-                            [this](td::td_api::authorizationStateClosed& u) {
-                                ui_thread {
-                                    initClientManager();
-                                };
-                            },
-                            [this](CanBeHandledBy<AuthorizationView> auto& u) {
-                                auto auth = _new<AuthorizationView>(sharedPtr());
-                                auth->handle(u);
-                                mWindow->present(std::move(auth));
-                            },
-                            Stub{},
-                        });
+        *object,
+        aui::lambda_overloaded {
+          [this](td::td_api::updateAuthorizationState& update_authorization_state) {
+              td::td_api::downcast_call(
+                  *update_authorization_state.authorization_state_,
+                  aui::lambda_overloaded {
+                    [this](td::td_api::authorizationStateWaitTdlibParameters& u) {
+                        auto parameters = td::td_api::make_object<td::td_api::setTdlibParameters>();
+                        parameters->database_directory_ = "tdlib";
+                        parameters->use_message_database_ = true;
+                        parameters->use_secret_chats_ = true;
+                        parameters->api_id_ = TELEGRAM_API_ID;
+                        parameters->api_hash_ = AUI_PP_STRINGIZE(TELEGRAM_API_HASH);
+                        parameters->system_language_code_ = "en";
+                        parameters->device_model_ = "Desktop";
+                        parameters->application_version_ = AUI_PP_STRINGIZE(AUI_CMAKE_PROJECT_VERSION);
+                        sendQuery(std::move(parameters));
                     },
-                    [this](td::td_api::updateNewChat& u) {
-                        auto& chat = getChat(u.chat_->id_);
-                        *chat = {
-                            .app = sharedPtr(),
-                            .self = chat,
-                            .id = u.chat_->id_,
-                            .title = u.chat_->title_,
-                            .previewText = Message::makePreviewText(u.chat_->last_message_.get()),
-                            .thumbnail = u.chat_->photo_ && u.chat_->photo_->minithumbnail_ ? util::image::from(*u.chat_->photo_->minithumbnail_) : nullptr,
-                            .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
-                            .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
-                            .type = [&] {
-                                Chat::Type result;
-                                td::td_api::downcast_call(*u.chat_->type_, aui::lambda_overloaded{
-                                    [&](td::td_api::userTypeRegular&) { result = Chat::TypeUserRegular{}; },
-                                    [&](td::td_api::chatTypeSupergroup& i) { result = Chat::TypeSupergroup{ .supergroupId = i.supergroup_id_, .isChannel = i.is_channel_ }; },
-                                    Stub{},
-                                });
-                                return result;
-                            }(),
-                            .unreadCount = u.chat_->unread_count_,
-                        };
-                        if (u.chat_->last_message_) {
-                            auto lastMessage = chat->getMessageOrNew(u.chat_->last_message_->id_);
-                            lastMessage->populateFrom(std::move(u.chat_->last_message_));
-                            chat->lastMessage = std::move(lastMessage);
-                        }
+                    [this](td::td_api::authorizationStateReady& u) {
+                        auto main = _new<MainView>(sharedPtr());
+                        mWindow->present(std::move(main));
                     },
-                    [this](td::td_api::updateChatTitle& u) {
-                       getChat(u.chat_id_)->title = u.title_;
+                    [this](td::td_api::authorizationStateClosed& u) {
+                        ui_thread { initClientManager(); };
                     },
-                    [this](td::td_api::updateChatReadInbox& u) {
-                        getChat(u.chat_id_)->inboxLastReadMessage = u.last_read_inbox_message_id_;
-                        getChat(u.chat_id_)->unreadCount = u.unread_count_;
+                    [this](CanBeHandledBy<AuthorizationView> auto& u) {
+                        auto auth = _new<AuthorizationView>(sharedPtr());
+                        auth->handle(u);
+                        mWindow->present(std::move(auth));
                     },
-                    [this](td::td_api::updateChatReadOutbox& u) {
-                        getChat(u.chat_id_)->outboxLastReadMessage = u.last_read_outbox_message_id_;
-                    },
-                    [this](td::td_api::updateChatLastMessage& u) {
-                        auto& chat = getChat(u.chat_id_);
-                        chat->previewText = Message::makePreviewText(u.last_message_.get());
-                        if (u.last_message_) {
-                            auto lastMessage = chat->getMessageOrNew(u.last_message_->id_);
-                            lastMessage->populateFrom(std::move(u.last_message_));
-                            chat->lastMessage = std::move(lastMessage);
-                        }
-                    },
-                    [this](td::td_api::updateUser &update_user) {
-                    },
-                    [this](td::td_api::updateOption& u) {
-                        if (u.name_ == "my_id") {
-                            mMyId = td::move_tl_object_as<td::td_api::optionValueInteger>(std::move(u.value_))->value_;
-                        }
-                    },
-                    [this](td::td_api::updateNewMessage& u) {
-                        auto msg = getChat(u.message_->chat_id_)->getMessageOrNew(u.message_->id_);
-                        msg->populateFrom(std::move(u.message_));
-                    },
-                    [this](td::td_api::updateMessageSendSucceeded& u) {
-                        auto msg = getChat(u.message_->chat_id_)->getMessage(u.old_message_id_);
-                        if (!msg) {
-                            return;
-                        }
-                        msg->id = u.message_->id_;
-                        msg->populateFrom(std::move(u.message_));
-                    },
-                    [this](td::td_api::updateConnectionState& u) {
-                       td::td_api::downcast_call(*u.state_, aui::lambda_overloaded{
-                           [&](td::td_api::connectionStateReady&) {
-                               mWarmupComplete = true;
-                           },
-                           [&](auto&&) {
-                               mWarmupComplete = false;
-                           },
-                       });
-                    },
-                    Stub{}});
+                    Stub {},
+                  });
+          },
+          [this](td::td_api::updateNewChat& u) {
+              auto& chat = getChat(u.chat_->id_);
+              *chat = {
+                  .app = sharedPtr(),
+                  .self = chat,
+                  .id = u.chat_->id_,
+                  .title = u.chat_->title_,
+                  .previewText = Message::makePreviewText(u.chat_->last_message_.get()),
+                  .thumbnail =
+                      u.chat_->photo_ && u.chat_->photo_->minithumbnail_
+                          ? util::image::from(*u.chat_->photo_->minithumbnail_)
+                          : nullptr,
+                  .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
+                  .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
+                  .viewAsTopics = u.chat_->view_as_topics_,
+                  .type =
+                      [&] {
+                          Chat::Type result;
+                          td::td_api::downcast_call(
+                              *u.chat_->type_,
+                              aui::lambda_overloaded {
+                                [&](td::td_api::userTypeRegular&) { result = Chat::TypeUserRegular {}; },
+                                [&](td::td_api::chatTypeSupergroup& i) {
+                                    result = Chat::TypeSupergroup {
+                                        .supergroupId = i.supergroup_id_, .isChannel = i.is_channel_
+                                    };
+                                },
+                                Stub {},
+                              });
+                          return result;
+                      }(),
+                  .unreadCount = u.chat_->unread_count_,
+              };
+              if (u.chat_->last_message_) {
+                  auto lastMessage = chat->getMessageOrNew(u.chat_->last_message_->id_);
+                  lastMessage->populateFrom(std::move(u.chat_->last_message_));
+                  chat->lastMessage = std::move(lastMessage);
+              }
+          },
+          [this](td::td_api::updateChatTitle& u) { getChat(u.chat_id_)->title = u.title_; },
+          [this](td::td_api::updateChatReadInbox& u) {
+              getChat(u.chat_id_)->inboxLastReadMessage = u.last_read_inbox_message_id_;
+              getChat(u.chat_id_)->unreadCount = u.unread_count_;
+          },
+          [this](td::td_api::updateChatReadOutbox& u) {
+              getChat(u.chat_id_)->outboxLastReadMessage = u.last_read_outbox_message_id_;
+          },
+          [this](td::td_api::updateChatLastMessage& u) {
+              auto& chat = getChat(u.chat_id_);
+              chat->previewText = Message::makePreviewText(u.last_message_.get());
+              if (u.last_message_) {
+                  auto lastMessage = chat->getMessageOrNew(u.last_message_->id_);
+                  lastMessage->populateFrom(std::move(u.last_message_));
+                  chat->lastMessage = std::move(lastMessage);
+              }
+          },
+          [this](td::td_api::updateUser& update_user) {},
+          [this](td::td_api::updateOption& u) {
+              if (u.name_ == "my_id") {
+                  mMyId = td::move_tl_object_as<td::td_api::optionValueInteger>(std::move(u.value_))->value_;
+              }
+          },
+          [this](td::td_api::updateNewMessage& u) {
+              auto msg = getChat(u.message_->chat_id_)->getMessageOrNew(u.message_->id_);
+              msg->populateFrom(std::move(u.message_));
+          },
+          [this](td::td_api::updateMessageSendSucceeded& u) {
+              auto msg = getChat(u.message_->chat_id_)->getMessage(u.old_message_id_);
+              if (!msg) {
+                  return;
+              }
+              msg->id = u.message_->id_;
+              msg->populateFrom(std::move(u.message_));
+          },
+          [this](td::td_api::updateConnectionState& u) {
+              td::td_api::downcast_call(
+                  *u.state_,
+                  aui::lambda_overloaded {
+                    [&](td::td_api::connectionStateReady&) { mWarmupComplete = true; },
+                    [&](auto&&) { mWarmupComplete = false; },
+                  });
+          },
+          [this](td::td_api::updateChatAddedToList& u) {
+              getChatList(ChatList::kindFromTg(*u.chat_list_))->chats << getChat(u.chat_id_);
+          },
+          Stub {} });
 #endif
 }
 
@@ -229,7 +233,9 @@ void App::update() {
     for (;;) {
         auto response = mClientManager->receive(0);
         if (!response.object) {
-            hasPendingNetworkActivity = !mHandlers.empty() || !mWarmupComplete || std::any_cast<AUpdater::StatusDownloading>(&*mAutoUpdater->status) != nullptr;
+            hasPendingNetworkActivity =
+                !mHandlers.empty() || !mWarmupComplete ||
+                std::any_cast<AUpdater::StatusDownloading>(&*mAutoUpdater->status) != nullptr;
             return;
         }
         processResponse(std::move(response));
@@ -244,8 +250,8 @@ void App::run() {
 }
 
 const _<Chat>& App::getChat(int64_t id) {
-    return mChats.getOrInsert(id, [&] {
-        return aui::ptr::manage(new Chat { .id = id });
-    });
+    return mChats.getOrInsert(id, [&] { return aui::ptr::manage(new Chat { .id = id }); });
 }
-
+_<ChatList> App::getChatList(ChatList::Kind kind) {
+    return mChatLists.getOrInsert(kind, [&] { return aui::ptr::manage(new ChatList { .kind = kind, .app = sharedPtr() }); });
+}
