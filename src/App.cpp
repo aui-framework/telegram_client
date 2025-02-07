@@ -229,7 +229,7 @@ void App::update() {
     for (;;) {
         auto response = mClientManager->receive(0);
         if (!response.object) {
-            hasPendingNetworkActivity = !mHandlers.empty() || !mWarmupComplete;
+            hasPendingNetworkActivity = !mHandlers.empty() || !mWarmupComplete || std::any_cast<AUpdater::StatusDownloading>(&*mAutoUpdater->status) != nullptr;
             return;
         }
         processResponse(std::move(response));
