@@ -21,6 +21,7 @@
 #include <AUI/Image/IDrawable.h>
 #include <AUI/Model/AListModel.h>
 #include "MessageSendingState.h"
+#include "ChatList.h"
 
 class App;
 struct Message;
@@ -36,6 +37,9 @@ struct Chat {
     AProperty<_<IDrawable>> thumbnail;
     AProperty<int64_t> inboxLastReadMessage;
     AProperty<int64_t> outboxLastReadMessage;
+    AProperty<bool> viewAsTopics;
+
+    AUnorderedMap<ChatList::Kind, _weak<ChatList::Entry>> chatLists;
 
     struct TypeUserRegular {
         bool operator==(const TypeUserRegular&) const = default;

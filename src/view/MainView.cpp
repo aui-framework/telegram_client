@@ -43,7 +43,7 @@ MainView::MainView(_<App> app) : mApp(std::move(app)) {
           .withItems({
             Vertical {
               mChatListView =
-                  _new<ChatListView>(mApp) let {
+                  _new<ChatListView>(mApp->getChatList(ChatList::Main{})) let {
                       it with_style { MinSize { 250_dp }, Expanding() };
                       connect(it->chatSelected, me::presentChat);
                   },

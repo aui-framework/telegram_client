@@ -39,9 +39,9 @@
 using namespace ass;
 using namespace declarative;
 
-ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
+ChatListView::ChatListView(_<ChatList> list) : mList(std::move(list)) {
     setContents(Vertical {
-      _new<SpacerForView>(mApp) << ".container_color",
+      _new<SpacerForView>(mList->app.lock()) << ".container_color",
       mContents = Centered::Expanding {},
     });
     setExtraStylesheet(AStylesheet {
@@ -52,25 +52,25 @@ ChatListView::ChatListView(_<App> app) : mApp(std::move(app)) {
         t<AScrollArea>(),
       } });
 
-    mApp->sendQuery(td::td_api::getChats(nullptr, 20), [this](td::td_api::chats& chats) {
-        auto model = AListModel<_<Chat>>::fromVector(
-            chats.chat_ids_ | ranges::view::transform([&](int64_t id) { return mApp->getChat(id); }) |
-            ranges::to_vector);
-
-        setModel(model);
+    connect(mNeedsFetch.changed, [&](bool needsFetch) {
+        if (needsFetch) {
+            mNeedsFetch = false;
+            fetchNextChats();
+        }
     });
-}
-void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
+    mNeedsFetch = true;
+
     ALayoutInflater::inflate(
         mContents,
         AScrollArea::Builder()
                 .withContents(
-                    AUI_DECLARATIVE_FOR(chat, model, AVerticalLayout) {
+                  AUI_DECLARATIVE_FOR(entry, mList->chats, AVerticalLayout) {
+                    const auto& chat = entry->chat;
                     return Horizontal {
                         Centered {
                           Icon {} with_style {
                             FixedSize(36_dp),
-                            BorderRadius { 36_dp / 2.f },
+                            BorderRadius { (bool(chat->viewAsTopics) ? 24_dp : 36_dp) / 2.f  },
                             AOverflow::HIDDEN,
                           } & chat->thumbnail,
                         },
@@ -83,12 +83,12 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                                       return nullptr;
                                   }
                                   return Horizontal {
-                                      _new<TGIco>() with_style { FontSize{10_pt} } << ".accent_textcolor" &
+                                      _new<TGIco>() with_style { FontSize { 10_pt } } << ".accent_textcolor" &
                                           msg->statusIcon > &TGIco::setIconHideIfNone,
                                       Label {} with_style { Opacity(0.6f), Margin(0) } &
                                           msg->date.readProjected(Message::dateFmt),
                                   } with_style {
-                                      LayoutSpacing{2_dp},
+                                      LayoutSpacing { 2_dp },
                                   };
                               }),
                             },
@@ -113,7 +113,7 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                                     }) > &AView::visibility,
                               },
                             } with_style {
-                              LayoutSpacing{2_dp},
+                              LayoutSpacing { 2_dp },
                             },
                           },
                         },
@@ -122,7 +122,11 @@ void ChatListView::setModel(const _<AListModel<_<Chat>>>& model) {
                             Padding { 5_dp, 6_dp },
                             Margin { 0 },
                         };
-                })
-                .build()
+                  }
+                ).build()
             << ".container_color");
+}
+
+void ChatListView::fetchNextChats() {
+    mList->fetchNextChats();
 }

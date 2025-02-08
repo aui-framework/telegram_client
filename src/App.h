@@ -24,6 +24,7 @@
 #include <AUI/Common/ATimer.h>
 #include "MainWindow.h"
 #include "MyUpdater.h"
+#include "model/ChatList.h"
 
 struct Chat;
 
@@ -76,6 +77,8 @@ public:
 
     AProperty<bool> hasPendingNetworkActivity = true;
 
+    _<ChatList> getChatList(ChatList::Kind kind);
+
 private:
     _unique<td::ClientManager> mClientManager;
     int64_t mMyId = 0;
@@ -85,6 +88,7 @@ private:
     std::uint64_t mCurrentQueryId{0};
     AMap<std::uint64_t, std::function<void(Object)>> mHandlers;
     AMap<std::int64_t, _<Chat>> mChats;
+    AUnorderedMap<ChatList::Kind, _<ChatList>> mChatLists;
     _<ATimer> mTgUpdateTimer;
     _<ATimer> mAutoUpdateTimer;
     _<MainWindow> mWindow;

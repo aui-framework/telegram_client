@@ -19,18 +19,20 @@
 
 #include <AUI/View/AViewContainer.h>
 #include "App.h"
+#include "model/ChatList.h"
 #include <AUI/Model/AListModel.h>
 
 class ChatListView: public AViewContainer {
 public:
-    ChatListView(_<App> chat);
-
-    void setModel(const _<AListModel<_<Chat>>>& model);
+    ChatListView(_<ChatList> list);
 
 signals:
     emits<_<Chat>> chatSelected;
 
 private:
-    _<App> mApp;
+    _<ChatList> mList;
     _<AViewContainer> mContents;
+    AProperty<bool> mNeedsFetch = false;
+
+    void fetchNextChats();
 };
