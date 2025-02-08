@@ -25,13 +25,13 @@ class App;
 
 struct ChatList {
     struct Main {
-        bool operator<=>(const Main&) const noexcept = default;
+        auto operator<=>(const Main&) const noexcept = default;
     };
     struct Archive {
-        bool operator<=>(const Archive&) const noexcept = default;
+        auto operator<=>(const Archive&) const noexcept = default;
     };
     struct Folder {
-        bool operator<=>(const Folder&) const noexcept = default;
+        auto operator<=>(const Folder&) const noexcept = default;
     };
     using Kind = std::variant<Main, Archive, Folder>;
 
