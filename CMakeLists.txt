@@ -1,7 +1,7 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
 project(auigram
-        VERSION 0.0.5 # CI_PROJECT_VERSION
+        VERSION 0.0.6 # CI_PROJECT_VERSION
 )
 
 
