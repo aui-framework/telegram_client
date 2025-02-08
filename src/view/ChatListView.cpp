@@ -64,7 +64,8 @@ ChatListView::ChatListView(_<ChatList> list) : mList(std::move(list)) {
         mContents,
         AScrollArea::Builder()
                 .withContents(
-                    AUI_DECLARATIVE_FOR(chat, mList->chats, AVerticalLayout) {
+                  AUI_DECLARATIVE_FOR(entry, mList->chats, AVerticalLayout) {
+                    const auto& chat = entry->chat;
                     return Horizontal {
                         Centered {
                           Icon {} with_style {
@@ -121,17 +122,11 @@ ChatListView::ChatListView(_<ChatList> list) : mList(std::move(list)) {
                             Padding { 5_dp, 6_dp },
                             Margin { 0 },
                         };
-                })
-                .build()
+                  }
+                ).build()
             << ".container_color");
 }
 
 void ChatListView::fetchNextChats() {
     mList->fetchNextChats();
-    /*
-    auto model = AListModel<_<Chat>>::fromVector(
-        chats.chat_ids_ | ranges::view::transform([&](int64_t id) { return mApp->getChat(id); }) |
-        ranges::to_vector);
-
-    setModel(model);*/
 }

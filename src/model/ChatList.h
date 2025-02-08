@@ -17,7 +17,11 @@
 #pragma once
 
 #include <AUI/Common/AObject.h>
-#include "Chat.h"
+#include <AUI/Model/AListModel.h>
+#include <td/telegram/td_api.h>
+
+struct Chat;
+class App;
 
 struct ChatList {
     struct Main {
@@ -37,7 +41,16 @@ struct ChatList {
     static td::td_api::object_ptr<td::td_api::ChatList> kindToTg(const Kind& kind);
 
     _weak<App> app;
-    _<AListModel<_<Chat>>> chats = _new<AListModel<_<Chat>>>();
+
+    struct Entry {
+        int64_t ordering = 0;
+        _<Chat> chat;
+        _weak<ChatList> chatList;
+    };
+
+    _<AListModel<_<Entry>>> chats = _new<AListModel<_<Entry>>>();
+
+    AListModel<_<Entry>>::iterator findEntryIterator(const _<Entry>& target);
 
     void fetchNextChats();
 };

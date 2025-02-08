@@ -16,6 +16,8 @@
 
 #include "ChatList.h"
 #include <App.h>
+#include <AUI/Traits/algorithms.h>
+#include "Chat.h"
 
 void ChatList::fetchNextChats() {
     auto app = ChatList::app.lock();
@@ -49,4 +51,48 @@ td::td_api::object_ptr<td::td_api::ChatList> ChatList::kindToTg(const ChatList::
         return td::td_api::make_object<td::td_api::chatListFolder>();
       },
     }, kind);
+}
+
+AListModel<_<ChatList::Entry>>::iterator ChatList::findEntryIterator(const _<Entry>& target) {
+    const auto targetOrdering = target->ordering;
+    const auto it = aui::binary_search(chats->begin(), chats->end(), [targetOrdering](const  AListModel<_<ChatList::Entry>>::iterator& entry) {
+      if ((*entry)->ordering == targetOrdering) {
+          return aui::BinarySearchResult::MATCH;
+      }
+      if ((*entry)->ordering < targetOrdering) {
+          return aui::BinarySearchResult::LEFT;
+      }
+      return aui::BinarySearchResult::RIGHT;
+    });
+
+    if (it == chats->end()) {
+        return chats->end();
+    }
+
+    if (*it == target) {
+        return it;
+    }
+
+    for (auto it2 = it; it2 != chats->end(); ++it2) {
+        if (*it2 == target) {
+            return it2;
+        }
+        if ((*it2)->ordering != targetOrdering) {
+            break;
+        }
+    }
+
+    for (auto it2 = it;; --it2) {
+        if (*it2 == target) {
+            return it2;
+        }
+        if ((*it2)->ordering != targetOrdering) {
+            break;
+        }
+        if (it2 == chats->begin()) {
+            break;
+        }
+    }
+
+    return chats->end();
 }

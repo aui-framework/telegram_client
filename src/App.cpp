@@ -17,6 +17,7 @@
 //
 // Created by alex2772 on 11/13/24.
 //
+#include <range/v3/all.hpp>
 
 #include "App.h"
 
@@ -221,7 +222,53 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                   });
           },
           [this](td::td_api::updateChatAddedToList& u) {
-              getChatList(ChatList::kindFromTg(*u.chat_list_))->chats << getChat(u.chat_id_);
+              auto kind = ChatList::kindFromTg(*u.chat_list_);
+              const auto& chat = getChat(u.chat_id_);
+              const auto& chatList = getChatList(kind);
+              _<ChatList::Entry> entry;
+              chatList->chats << chat->chatLists.getOrInsert(kind, [&] {
+                  return entry = aui::ptr::manage(new ChatList::Entry {
+                    .chat = chat,
+                    .chatList = chatList,
+                  });
+              }).lock();
+          },
+          [this](td::td_api::updateChatPosition& u) {
+            auto kind = ChatList::kindFromTg(*u.position_->list_);
+            const auto& chat = getChat(u.chat_id_);
+            if (auto it = chat->chatLists.find(kind); it != chat->chatLists.end()) {
+                if (auto entry = it->second.lock()) {
+                    if (auto chatList = entry->chatList.lock()) {
+                        {
+                            auto it2 = chatList->findEntryIterator(entry);
+                            AUI_ASSERT(it2 != chatList->chats.end());
+                            AUI_ASSERT(*it2 == entry);
+                            chatList->chats->erase(it2);
+                        }
+                        entry->ordering = u.position_->order_;
+                        auto it2 = ranges::lower_bound(
+                            chatList->chats, entry->ordering, std::greater {},
+                            [](const _<ChatList::Entry>& e) { return e->ordering; });
+                        chatList->chats->insert(it2, std::move(entry));
+                    }
+                }
+            }
+          },
+          [this](td::td_api::updateChatRemovedFromList& u) {
+              auto kind = ChatList::kindFromTg(*u.chat_list_);
+              const auto& chat = getChat(u.chat_id_);
+              if (auto it = chat->chatLists.find(kind); it != chat->chatLists.end()) {
+                  if (auto entry = it->second.lock()) {
+                      if (auto chatList = entry->chatList.lock()) {
+                          auto it2 = chatList->findEntryIterator(entry);
+                          if (it2 != chatList->chats.end()) {
+                              AUI_ASSERT(*it2 == entry);
+                              chatList->chats->erase(it2);
+                          }
+                      }
+                  }
+                  chat->chatLists.erase(it);
+              }
           },
           Stub {} });
 #endif
