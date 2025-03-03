@@ -82,6 +82,7 @@ void App::sendQuery(td::td_api::object_ptr<td::td_api::Function> f, std::functio
 }
 
 void App::processResponse(td::ClientManager::Response response) {
+    return;
     if (!response.object) {
         return;
     }
