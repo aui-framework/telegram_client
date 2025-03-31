@@ -226,7 +226,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
               const auto& chat = getChat(u.chat_id_);
               const auto& chatList = getChatList(kind);
               _<ChatList::Entry> entry;
-              chatList->chats << chat->chatLists.getOrInsert(kind, [&] {
+              chatList->chats.writeScope() << chat->chatLists.getOrInsert(kind, [&] {
                   return entry = aui::ptr::manage(new ChatList::Entry {
                     .chat = chat,
                     .chatList = chatList,
@@ -241,15 +241,14 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                     if (auto chatList = entry->chatList.lock()) {
                         {
                             auto it2 = chatList->findEntryIterator(entry);
-                            AUI_ASSERT(it2 != chatList->chats.end());
+                            AUI_ASSERT(it2 != chatList->chats->end());
                             AUI_ASSERT(*it2 == entry);
-                            chatList->chats->erase(it2);
+                            chatList->chats.writeScope()->erase(it2);
                         }
                         entry->ordering = u.position_->order_;
-                        auto it2 = ranges::lower_bound(
-                            chatList->chats, entry->ordering, std::greater {},
+                        auto it2 = ranges::lower_bound(*chatList->chats, entry->ordering, std::greater {},
                             [](const _<ChatList::Entry>& e) { return e->ordering; });
-                        chatList->chats->insert(it2, std::move(entry));
+                        chatList->chats.writeScope()->insert(it2, std::move(entry));
                     }
                 }
             }
@@ -261,9 +260,9 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                   if (auto entry = it->second.lock()) {
                       if (auto chatList = entry->chatList.lock()) {
                           auto it2 = chatList->findEntryIterator(entry);
-                          if (it2 != chatList->chats.end()) {
+                          if (it2 != chatList->chats->end()) {
                               AUI_ASSERT(*it2 == entry);
-                              chatList->chats->erase(it2);
+                              chatList->chats.writeScope()->erase(it2);
                           }
                       }
                   }

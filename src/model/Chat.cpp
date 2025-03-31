@@ -21,19 +21,19 @@
 #include "Chat.h"
 #include "Message.h"
 
-const _<Message>& Chat::getMessageOrNew(int64_t id) const {
-    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
-    if (l != messages.end()) {
+const _<Message>& Chat::getMessageOrNew(int64_t id) {
+    auto l = ranges::lower_bound(*messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
+    if (l != messages->end()) {
         if ((*l)->id == id) {
             return *l;
         }
     }
-    return *messages->insert(l, aui::ptr::manage(new Message{ .chat = self, .id = id }));
+    return *messages.writeScope()->insert(l, aui::ptr::manage(new Message{ .chat = self, .id = id }));
 }
 
 _<Message> Chat::getMessage(int64_t id) const {
-    auto l = ranges::lower_bound(messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
-    if (l != messages.end()) {
+    auto l = ranges::lower_bound(*messages, id, std::less<>{}, [](const _<Message>& msg) {  return msg->id; });
+    if (l != messages->end()) {
         if ((*l)->id == id) {
             return *l;
         }

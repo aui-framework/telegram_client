@@ -24,6 +24,7 @@
 #include <AUI/Util/ALayoutInflater.h>
 #include <AUI/Util/UIBuildingHelpers.h>
 #include <AUI/View/AButton.h>
+#include <AUI/View/AForEachUI.h>
 #include <AUI/View/ADrawableView.h>
 #include <AUI/View/AScrollArea.h>
 #include <AUI/View/ASpacerFixed.h>
@@ -58,8 +59,8 @@ _<AViewContainer> ChatView::makeMessage(const _<MessageModelT>& message) {
                         } with_style {
                           Opacity { 0.3f },
                         },
-                        _new<TGIco>() with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp } }
-                                << ".status" << ".accent_textcolor" & message.statusIcon > &TGIco::setIconHideIfNone,
+                        _new<TGIco>() << ".status" << ".accent_textcolor" with_style { FontSize { 14_dp }, FixedSize { {}, 14_dp } }
+                                & message.statusIcon > &TGIco::setIconHideIfNone,
                     };
                 }
                 if constexpr (requires { MessageModelT::isRecommended; }) {
@@ -195,27 +196,16 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
           Vertical::Expanding {
             title,
           },
-        } with_style {
+        } << ".container_color" with_style {
           AOverflow::HIDDEN,
-        }
-        << ".container_color");
+        });
 
 
     ALayoutInflater::inflate(
         mContentsWrap,
         Vertical {
-          AUI_DECLARATIVE_FOR(message, mChat->messages, AVerticalLayout) {
+          AUI_DECLARATIVE_FOR(message, *mChat->messages, AVerticalLayout) {
               auto view = makeMessage(message);
-
-              // hack: force recall AUI_DECLARATIVE_FOR clause when userId is updated.
-              connect(message->userId.changed, [chat = mChat, msgId = message->id](int64_t userId) {
-                  auto it = ranges::find(chat->messages, msgId, [](const _<Message>& msg) {
-                      return msg->id;
-                  });
-                  if (it != chat->messages.end()) {
-                      chat->messages->invalidate(it);
-                  }
-              });
 
               const bool mine = message->userId == mApp->myId();
               if (mine) {
@@ -229,7 +219,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                   view,
               };
           },
-          AUI_DECLARATIVE_FOR(message, mChat->sponsoredMessages, AVerticalLayout) {
+          AUI_DECLARATIVE_FOR(message, *mChat->sponsoredMessages, AVerticalLayout) {
               auto view = makeMessage(message);
               return Horizontal {
                   view,
@@ -253,13 +243,13 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
         if (superGroup->isChannel) {
             mApp->sendQuery(
                 td::td_api::getChatSponsoredMessages(mChat->id), [&](td::td_api::sponsoredMessages& messages) {
-                    mChat->sponsoredMessages->clear();
+                    mChat->sponsoredMessages.writeScope()->clear();
                     for (auto& msg : messages.messages_) {
-                        mChat->sponsoredMessages << aui::ptr::manage(new MessageSponsored {
+                        mChat->sponsoredMessages.writeScope()->push_back(aui::ptr::manage(new MessageSponsored {
                           .id = msg->message_id_,
                           .content = Message::makeContent(msg->content_),
                           .isRecommended = msg->is_recommended_,
-                        });
+                        }));
                     }
                 });
         }

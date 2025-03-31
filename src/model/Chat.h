@@ -53,9 +53,9 @@ struct Chat {
     AProperty<Type> type;
     AProperty<int> unreadCount;
 
-    _<AListModel<_<Message>>> messages = _new<AListModel<_<Message>>>();
-    _<AListModel<_<MessageSponsored>>> sponsoredMessages = _new<AListModel<_<MessageSponsored>>>();
+    AProperty<AVector<_<Message>>> messages;
+    AProperty<AVector<_<MessageSponsored>>> sponsoredMessages;
 
-    const _<Message>& getMessageOrNew(int64_t id) const;
+    const _<Message>& getMessageOrNew(int64_t id);
     _<Message> getMessage(int64_t id) const;
 };

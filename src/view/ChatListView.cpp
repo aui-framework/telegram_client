@@ -64,7 +64,7 @@ ChatListView::ChatListView(_<ChatList> list) : mList(std::move(list)) {
         mContents,
         AScrollArea::Builder()
                 .withContents(
-                  AUI_DECLARATIVE_FOR(entry, mList->chats, AVerticalLayout) {
+                  AUI_DECLARATIVE_FOR(entry, *mList->chats, AVerticalLayout) {
                     const auto& chat = entry->chat;
                     return Horizontal {
                         Centered {
@@ -83,7 +83,7 @@ ChatListView::ChatListView(_<ChatList> list) : mList(std::move(list)) {
                                       return nullptr;
                                   }
                                   return Horizontal {
-                                      _new<TGIco>() with_style { FontSize { 10_pt } } << ".accent_textcolor" &
+                                      _new<TGIco>() << ".accent_textcolor" with_style { FontSize{10_pt} } &
                                           msg->statusIcon > &TGIco::setIconHideIfNone,
                                       Label {} with_style { Opacity(0.6f), Margin(0) } &
                                           msg->date.readProjected(Message::dateFmt),
@@ -99,14 +99,14 @@ ChatListView::ChatListView(_<ChatList> list) : mList(std::move(list)) {
                                 Opacity(0.6f),
                               } && chat->previewText,
                               Centered {
-                                Label {} with_style {
+                                Label {} << ".unread_count"  with_style {
                                   MinSize { 16_dp - 4_dp * 2.f, 16_dp },
                                   FontSize { 10_dp },
                                   BorderRadius { 16_dp / 2.f },
                                   Padding { 0, 4_dp },
                                   Margin { 0 },
                                   ATextAlign::CENTER,
-                                } << ".unread_count" &
+                                } &
                                     chat->unreadCount.readProjected(AString::number<int>) &
                                     chat->unreadCount.readProjected([](int count) {
                                         return count > 0 ? Visibility::VISIBLE : Visibility::GONE;

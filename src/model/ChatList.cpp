@@ -53,9 +53,9 @@ td::td_api::object_ptr<td::td_api::ChatList> ChatList::kindToTg(const ChatList::
     }, kind);
 }
 
-AListModel<_<ChatList::Entry>>::iterator ChatList::findEntryIterator(const _<Entry>& target) {
+AVector<_<ChatList::Entry>>::const_iterator ChatList::findEntryIterator(const _<Entry>& target) {
     const auto targetOrdering = target->ordering;
-    const auto it = aui::binary_search(chats->begin(), chats->end(), [targetOrdering](const  AListModel<_<ChatList::Entry>>::iterator& entry) {
+    const auto it = aui::binary_search(chats->begin(), chats->end(), [targetOrdering](const AVector<_<ChatList::Entry>>::const_iterator& entry) {
       if ((*entry)->ordering == targetOrdering) {
           return aui::BinarySearchResult::MATCH;
       }

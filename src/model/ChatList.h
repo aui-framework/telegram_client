@@ -17,6 +17,7 @@
 #pragma once
 
 #include <AUI/Common/AObject.h>
+#include <AUI/Common/AProperty.h>
 #include <AUI/Model/AListModel.h>
 #include <td/telegram/td_api.h>
 
@@ -48,9 +49,9 @@ struct ChatList {
         _weak<ChatList> chatList;
     };
 
-    _<AListModel<_<Entry>>> chats = _new<AListModel<_<Entry>>>();
+    AProperty<AVector<_<Entry>>> chats;
 
-    AListModel<_<Entry>>::iterator findEntryIterator(const _<Entry>& target);
+    AVector<_<Entry>>::const_iterator findEntryIterator(const _<Entry>& target);
 
     void fetchNextChats();
 };
