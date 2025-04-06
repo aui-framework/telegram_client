@@ -185,7 +185,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                 SpacerExpanding(),
                 _new<TGIco>(TGIco::Icon::SEND).connect(&AView::clicked, me::send) with_style {
                   Padding(4_dp),
-                  BorderRadius(8_dp),
+                  BorderRadius{8_dp},
                   on_state::Hovered {
                     BackgroundSolid { 0x80aaaaaa_argb },
                   },

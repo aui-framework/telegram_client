@@ -50,12 +50,12 @@ MainView::MainView(_<App> app) : mApp(std::move(app)) {
               CustomLayout {} & mApp->autoUpdater()->status.readProjected([this](const std::any& status) -> _<AView> {
                   if (std::any_cast<AUpdater::StatusWaitingForApplyAndRestart>(&status)) {
                       return Button { Centered::Expanding { Horizontal { _new<TGIco>(TGIco::Icon::UPDATE), Label { "Apply update and restart" } } } }.connect(&AView::clicked, slot(mApp->autoUpdater())::applyUpdateAndRestart) with_style {
-                          TextColor(0xffffff_rgb),
+                          TextColor{0xffffff_rgb},
                           BackgroundGradient(0x1b97bd_rgb, 0x13b252_rgb, 132_deg),
                           Border(1_px, 0x70ffffff_argb),
                           Padding(12_dp, {}),
                           Margin(0),
-                          BorderRadius(0),
+                          BorderRadius{0},
                           ACursor::POINTER,
                       };
                   }
