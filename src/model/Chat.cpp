@@ -40,3 +40,23 @@ _<Message> Chat::getMessage(int64_t id) const {
     }
     return nullptr;
 }
+
+void Chat::updateChatListOrder(ChatList::Kind kind, int64_t ordering) {
+    if (auto it = chatLists.find(kind); it != chatLists.end()) {
+        if (auto entry = it->second.lock()) {
+            if (auto chatList = entry->chatList.lock()) {
+                auto chats = chatList->chats.writeScope();
+                {
+                    auto it2 = chatList->findEntryIterator(entry);
+                    AUI_ASSERT(it2 != chats->end());
+                    AUI_ASSERT(*it2 == entry);
+                    chats->erase(it2);
+                }
+                entry->ordering = ordering;
+                auto it2 = ranges::lower_bound(*chats, entry->ordering, std::greater {},
+                                               [](const _<ChatList::Entry>& e) { return e->ordering; });
+                chats->insert(it2, std::move(entry));
+            }
+        }
+    }
+}

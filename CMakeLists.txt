@@ -1,7 +1,7 @@
 # Standard routine
 cmake_minimum_required(VERSION 3.16)
 project(auigram
-        VERSION 0.0.6 # CI_PROJECT_VERSION
+        VERSION 0.0.7 # CI_PROJECT_VERSION
 )
 
 
@@ -20,7 +20,7 @@ if (NOT CLIENT_DEMO)
     endif()
 endif()
 
-set(AUI_VERSION v7.0.1)
+set(AUI_VERSION v7.0.2-rc.3)
 
 
 # Use AUI.Boot
