@@ -21,7 +21,8 @@
 #include <td/telegram/td_api.hpp>
 #include "Message.h"
 #include "view/TGIco.h"
-#include "util/Image.h"
+#include <App.h>
+#include "Photo.h"
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
@@ -47,9 +48,9 @@ AString Message::makePreviewText(td::td_api::message* message) {
     return result;
 }
 
-void Message::populateFrom(td::td_api::object_ptr<td::td_api::message> message) {
+void Message::populateFrom(App& app, td::td_api::object_ptr<td::td_api::message> message) {
     chatId = message->chat_id_;
-    content = makeContent(message->content_);
+    content = makeContent(app, message->content_);
     date = std::chrono::system_clock::from_time_t(message->date_);
     td::td_api::downcast_call(*message->sender_id_, aui::lambda_overloaded {
         [&](td::td_api::messageSenderUser& u) {
@@ -61,7 +62,7 @@ void Message::populateFrom(td::td_api::object_ptr<td::td_api::message> message) 
     sendingState = MessageSendingState::make(message->sending_state_);
 }
 
-Message::Content Message::makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content) {
+Message::Content Message::makeContent(App& app, td::td_api::object_ptr<td::td_api::MessageContent>& content) {
     Content result;
     td::td_api::downcast_call(*content, aui::lambda_overloaded{
             [&](td::td_api::messageText& u) {
@@ -69,10 +70,10 @@ Message::Content Message::makeContent(td::td_api::object_ptr<td::td_api::Message
             },
             [&](td::td_api::messagePhoto& u) {
                 result.text = u.caption_->text_;
-                auto& size = u.photo_->sizes_.front();
+                auto& firstSize = u.photo_->sizes_.front();
                 result.photo = Content::Photo {
-                    .drawable = util::image::from(*u.photo_->minithumbnail_),
-                    .size = { size->width_, size->height_ },
+                    .drawable = app.photos().get(app.sharedPtr(), u.photo_),
+                    .size = { firstSize->width_, firstSize->height_ },
                 };
             },
             [](auto&) {},

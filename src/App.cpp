@@ -28,7 +28,7 @@
 #include <model/Message.h>
 #include <view/MainView.h>
 #include <view/AuthorizationView.h>
-#include <util/Image.h>
+#include <Photo.h>
 
 static constexpr auto LOG_TAG = "App";
 
@@ -147,10 +147,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                   .id = u.chat_->id_,
                   .title = u.chat_->title_,
                   .previewText = Message::makePreviewText(u.chat_->last_message_.get()),
-                  .thumbnail =
-                      u.chat_->photo_ && u.chat_->photo_->minithumbnail_
-                          ? util::image::from(*u.chat_->photo_->minithumbnail_)
-                          : nullptr,
+                  .thumbnail = mPhotoCache.get(sharedPtr(), u.chat_->photo_),
                   .inboxLastReadMessage = u.chat_->last_read_inbox_message_id_,
                   .outboxLastReadMessage = u.chat_->last_read_outbox_message_id_,
                   .viewAsTopics = u.chat_->view_as_topics_,
@@ -174,7 +171,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
               };
               if (u.chat_->last_message_) {
                   auto lastMessage = chat->getMessageOrNew(u.chat_->last_message_->id_);
-                  lastMessage->populateFrom(std::move(u.chat_->last_message_));
+                  lastMessage->populateFrom(*this, std::move(u.chat_->last_message_));
                   chat->lastMessage = std::move(lastMessage);
               }
           },
@@ -191,7 +188,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
               chat->previewText = Message::makePreviewText(u.last_message_.get());
               if (u.last_message_) {
                   auto lastMessage = chat->getMessageOrNew(u.last_message_->id_);
-                  lastMessage->populateFrom(std::move(u.last_message_));
+                  lastMessage->populateFrom(*this, std::move(u.last_message_));
                   chat->lastMessage = std::move(lastMessage);
               }
               for (auto& position : u.positions_) {
@@ -206,7 +203,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
           },
           [this](td::td_api::updateNewMessage& u) {
               auto msg = getChat(u.message_->chat_id_)->getMessageOrNew(u.message_->id_);
-              msg->populateFrom(std::move(u.message_));
+              msg->populateFrom(*this, std::move(u.message_));
           },
           [this](td::td_api::updateMessageSendSucceeded& u) {
               auto msg = getChat(u.message_->chat_id_)->getMessage(u.old_message_id_);
@@ -214,7 +211,7 @@ void App::commonHandler(td::tl::unique_ptr<td::td_api::Object> object) {
                   return;
               }
               msg->id = u.message_->id_;
-              msg->populateFrom(std::move(u.message_));
+              msg->populateFrom(*this, std::move(u.message_));
           },
           [this](td::td_api::updateConnectionState& u) {
               td::td_api::downcast_call(

@@ -16,15 +16,14 @@
 
 #pragma once
 
-#include <td/telegram/Client.h>
-#include <td/telegram/td_api.h>
-#include <td/telegram/td_api.hpp>
+#include <Telegram.h>
 #include <AUI/Common/AObject.h>
 #include <AUI/Common/AMap.h>
 #include <AUI/Common/ATimer.h>
 #include "MainWindow.h"
 #include "MyUpdater.h"
 #include "model/ChatList.h"
+#include "Photo.h"
 
 struct Chat;
 
@@ -76,8 +75,11 @@ public:
     const _<MyUpdater>& autoUpdater() const { return mAutoUpdater; }
 
     AProperty<bool> hasPendingNetworkActivity = true;
-
     _<ChatList> getChatList(ChatList::Kind kind);
+
+    photo::Cache& photos() {
+        return mPhotoCache;
+    }
 
 private:
     _unique<td::ClientManager> mClientManager;
@@ -93,6 +95,7 @@ private:
     _<ATimer> mAutoUpdateTimer;
     _<MainWindow> mWindow;
     _<MyUpdater> mAutoUpdater;
+    photo::Cache mPhotoCache;
 
     void commonHandler(td::tl::unique_ptr<td::td_api::Object> object);
     void processResponse(td::ClientManager::Response response);

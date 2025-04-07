@@ -22,7 +22,6 @@ endif()
 
 set(AUI_VERSION v7.0.2-rc.3)
 
-
 # Use AUI.Boot
 file(
         DOWNLOAD
@@ -34,6 +33,11 @@ include(${CMAKE_CURRENT_BINARY_DIR}/aui.boot.cmake)
 auib_import(aui https://github.com/aui-framework/aui
         COMPONENTS core views updater crypt curl json
         VERSION ${AUI_VERSION})
+#
+#auib_import(Boost https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.xz
+#        ARCHIVE
+#        CMAKE_ARGS -DBOOST_ENABLE_CMAKE=ON
+#)
 
 # import tdlib (telegram client library)
 auib_import(Td https://github.com/tdlib/td

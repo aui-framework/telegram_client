@@ -233,7 +233,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
         [this](td::td_api::messages& messages) {
             for (auto& message : messages.messages_) {
                 auto msg = mChat->getMessageOrNew(message->id_);
-                msg->populateFrom(std::move(message));
+                msg->populateFrom(*mApp, std::move(message));
             }
 
         });
@@ -247,7 +247,7 @@ ChatView::ChatView(_<App> app, _<Chat> chat) : mApp(std::move(app)), mChat(std::
                     for (auto& msg : messages.messages_) {
                         mChat->sponsoredMessages.writeScope()->push_back(aui::ptr::manage(new MessageSponsored {
                           .id = msg->message_id_,
-                          .content = Message::makeContent(msg->content_),
+                          .content = Message::makeContent(*mApp, msg->content_),
                           .isRecommended = msg->is_recommended_,
                         }));
                     }

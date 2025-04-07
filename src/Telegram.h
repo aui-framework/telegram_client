@@ -1,5 +1,5 @@
-// AUIgram - example of using AUI Framework
-// Copyright (C) 2024 Alex2772 and Contributors
+// AUI Telegram Client - example of using AUI Framework
+// Copyright (C) 2025 Alex2772 and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <AUI/Util/AImageDrawable.h>
-#include "App.h"
-
-namespace util::image {
-    _<IDrawable> from(const td::td_api::minithumbnail& minithumbnail);
-}
+#include <td/telegram/Client.h>
+#include <td/telegram/td_api.h>
+#include <td/telegram/td_api.hpp>

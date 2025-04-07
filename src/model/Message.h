@@ -45,8 +45,8 @@ struct Message {
     APropertyPrecomputed<TGIco::Icon> statusIcon = statusIconProperty();
 
     static AString makePreviewText(td::td_api::message* message);
-    void populateFrom(td::td_api::object_ptr<td::td_api::message> message);
-    static Content makeContent(td::td_api::object_ptr<td::td_api::MessageContent>& content);
+    void populateFrom(App& app, td::td_api::object_ptr<td::td_api::message> message);
+    static Content makeContent(App& app, td::td_api::object_ptr<td::td_api::MessageContent>& content);
 
     static AString dateShortFmt(std::chrono::system_clock::time_point time);;
 
